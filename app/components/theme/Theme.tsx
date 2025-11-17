@@ -1,47 +1,45 @@
 "use client";
 
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { FaMoon, FaSun } from "react-icons/fa6";
 
-// Định nghĩa kiểu Theme
 type ThemeType = "light" | "dark";
 
 const Theme: React.FC = () => {
-  // 1. Khởi tạo State và Đọc localStorage (Chỉ chạy trên Client sau Hydration)
-  const [theme, setTheme] = useState<ThemeType>(() => {
-    // Chỉ chạy MỘT lần trong quá trình khởi tạo trên client
-    if (typeof window !== "undefined") {
-      // Lấy giá trị đã lưu
-      const savedTheme = localStorage.getItem("theme") as ThemeType | null;
-      // Dùng giá trị đã lưu, nếu không có thì dùng 'light'
-      return savedTheme || "light";
-    }
-    // Giá trị mặc định được dùng trong quá trình SSR (Server Side Rendering)
-    return "light";
-  });
+  const [theme, setTheme] = useState<ThemeType>("light");
+  const [mounted, setMounted] = useState(false);
 
-  // 2. Sử dụng useLayoutEffect để áp dụng lớp CSS ngay lập tức
-  // useLayoutEffect chạy đồng bộ sau DOM mutation nhưng trước khi trình duyệt vẽ lại,
-  // giúp tránh hiện tượng nhấp nháy UI (flickering).
-  useLayoutEffect(() => {
-    if (typeof window === "undefined") return;
+  // Chạy sau khi client đã mount → tránh mismatch
+  useEffect(() => {
+    const savedTheme = (localStorage.getItem("theme") as ThemeType) || "light";
+    setTheme(savedTheme);
 
     const root = document.documentElement;
+    root.classList.toggle("dark", savedTheme === "dark");
 
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
+    setMounted(true);
+  }, []);
 
-    // Đồng bộ trạng thái theme vào localStorage
+  // Apply lại khi theme thay đổi
+  useEffect(() => {
+    if (!mounted) return;
+
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+
     localStorage.setItem("theme", theme);
-  }, [theme]);
+  }, [theme, mounted]);
 
-  // 3. Hàm chuyển đổi theme
   const toggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
+
+  // CHẶN render icon trước khi mounted xong
+  if (!mounted) {
+    return (
+      <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800/80"></div>
+    );
+  }
 
   return (
     <button
