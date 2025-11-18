@@ -5,7 +5,11 @@ export interface User {
   lastName: string;
   status: "PENDING" | "ACTIVE" | "INACTIVE";
   role: "CUSTOMER" | "ADMIN" | "SELLER";
-  avatar?: string;
+  avatar?: string | null;
+  phone?: string | null;
+  emailVerifiedAt?: string | null;
+  lastLoginAt?: string | null;
+  lastLoginIp?: string | null;
   createdAt: string;
   updatedAt?: string;
 }

@@ -1,16 +1,44 @@
 "use client";
 
-import { useAuth } from "@/hooks";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-// 1. Import RoleGuard (giả sử bạn đã tạo nó)
-import { RoleGuard } from "@/components/providers/RoleGuard";
+import Link from "next/link";
+import { useEffect, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
-// 2. Component layout gốc của bạn
+import { useAuth } from "@/hooks";
+import { RoleGuard } from "@/components/providers/RoleGuard";
+import { Button } from "@/components/ui/button";
+
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isCheckingAuth, isInitialized } = useAuth();
+  const { user, isAuthenticated, isCheckingAuth, isInitialized, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const isResolvingAuth = isCheckingAuth || !isInitialized;
+  const normalizedRole = user?.role?.toUpperCase();
+
+  const navItems = useMemo(
+    () => [
+      {
+        href: "/dashboard",
+        label: "Overview",
+        roles: ["CUSTOMER", "SELLER", "ADMIN"],
+      },
+      {
+        href: "/profile",
+        label: "Profile",
+        roles: ["CUSTOMER", "SELLER", "ADMIN"],
+      },
+      {
+        href: "/admin",
+        label: "Admin",
+        roles: ["ADMIN"],
+      },
+    ],
+    []
+  );
+
+  const accessibleNav = navItems.filter((item) =>
+    normalizedRole ? item.roles.includes(normalizedRole) : false
+  );
 
   useEffect(() => {
     if (!isResolvingAuth && !isAuthenticated) {
@@ -34,9 +62,44 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
+          <div className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between">
+            <div>
               <h1 className="text-xl font-semibold">CheckItOut Dashboard</h1>
+              <p className="text-sm text-muted-foreground">
+                Manage everything for your role from one centralized space.
+              </p>
+            </div>
+            <nav className="flex flex-wrap items-center gap-2">
+              {accessibleNav.map((item) => {
+                const isActive =
+                  pathname === item.href || pathname?.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-primary text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-semibold text-gray-900">
+                  {user ? `${user.firstName} ${user.lastName}` : "User"}
+                </p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {user?.role}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={logout}>
+                Logout
+              </Button>
             </div>
           </div>
         </div>
@@ -46,15 +109,13 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-// 3. Bọc layout gốc bằng RoleGuard
 export default function ProtectedDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Chỉ cho phép CUSTOMER và ADMIN vào dashboard
   return (
-    <RoleGuard allowedRoles={["CUSTOMER", "ADMIN"]}>
+    <RoleGuard allowedRoles={["CUSTOMER", "SELLER", "ADMIN"]}>
       <DashboardLayoutContent>{children}</DashboardLayoutContent>
     </RoleGuard>
   );
