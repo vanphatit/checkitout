@@ -9,11 +9,15 @@ import {
   AuthResponse,
 } from "@/types/auth";
 import api from "@/lib/axios";
+import { getRoleFromToken, isTokenExpired } from "@/lib/jwt";
+import { tokenStorage } from "@/lib/tokenStorage";
 
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   isLoading: false,
+  isCheckingAuth: false,
+  isInitialized: false,
   error: null,
 };
 
@@ -25,10 +29,19 @@ export const loginUser = createAsyncThunk(
       const response = await api.post<AuthResponse>("/auth/login", credentials);
       const { user, accessToken } = response.data;
 
-      // Store access token (refresh token is stored as HTTP-only cookie)
-      localStorage.setItem("accessToken", accessToken);
+      if (accessToken) {
+        tokenStorage.setAccessToken(accessToken);
+      }
 
-      return user;
+      let resolvedUser = user;
+      if (resolvedUser && !resolvedUser.role) {
+        const tokenRole = getRoleFromToken(accessToken);
+        if (tokenRole) {
+          resolvedUser = { ...resolvedUser, role: tokenRole as User["role"] };
+        }
+      }
+
+      return resolvedUser;
     } catch (error: unknown) {
       if (error instanceof Error) {
         return rejectWithValue(error.message);
@@ -103,14 +116,17 @@ export const refreshTokens = createAsyncThunk(
   "auth/refreshToken",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.post<{ accessToken: string; user: User }>(
+      const response = await api.post<{ accessToken: string; user?: User }>(
         "/auth/refresh-token"
       );
       const { accessToken, user } = response.data;
-      localStorage.setItem("accessToken", accessToken);
+      if (!accessToken) {
+        return rejectWithValue("Missing access token");
+      }
+      tokenStorage.setAccessToken(accessToken);
       return { accessToken, user };
     } catch (error: unknown) {
-      localStorage.removeItem("accessToken");
+      tokenStorage.clearAccessToken();
       if (error instanceof Error) {
         return rejectWithValue(error.message);
       }
@@ -121,21 +137,35 @@ export const refreshTokens = createAsyncThunk(
 
 export const checkAuth = createAsyncThunk(
   "auth/checkAuth",
-  async (_, { rejectWithValue }) => {
+  async (_, thunkAPI) => {
+    const token = tokenStorage.getAccessToken();
+    if (!token) {
+      return thunkAPI.rejectWithValue("No access token");
+    }
+    if (isTokenExpired(token)) {
+      tokenStorage.clearAccessToken();
+      return thunkAPI.rejectWithValue("Token expired");
+    }
+
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        return rejectWithValue("No token found");
+      const res = await api.get<{ user?: User } | User>("/auth/me");
+      const user = "user" in res.data ? res.data.user : res.data;
+
+      if (user && !user.role) {
+        const tokenRole = getRoleFromToken(token);
+        if (tokenRole) {
+          user.role = tokenRole as User["role"];
+        }
       }
 
-      const response = await api.get<{ user: User }>("/auth/me");
-      return response.data.user;
-    } catch (error: unknown) {
-      localStorage.removeItem("accessToken");
-      if (error instanceof Error) {
-        return rejectWithValue(error.message);
+      if (!user) {
+        return thunkAPI.rejectWithValue("User not found");
       }
-      return rejectWithValue("Authentication check failed");
+
+      return user;
+    } catch (e) {
+      tokenStorage.clearAccessToken();
+      return thunkAPI.rejectWithValue("Session invalid");
     }
   }
 );
@@ -148,8 +178,9 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
-      localStorage.removeItem("accessToken");
-      // Refresh token is HTTP-only cookie, will be cleared by server
+      state.isCheckingAuth = false;
+      state.isInitialized = true;
+      tokenStorage.clearAccessToken();
     },
     clearError: (state) => {
       state.error = null;
@@ -157,6 +188,11 @@ const authSlice = createSlice({
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
       state.isAuthenticated = true;
+    },
+    setUserRole(state, action: PayloadAction<string>) {
+      if (state.user) {
+        state.user.role = action.payload;
+      }
     },
   },
   extraReducers: (builder) => {
@@ -170,6 +206,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.isInitialized = true;
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -184,7 +221,8 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload;
-        state.isAuthenticated = true;
+        state.isAuthenticated = false;
+        state.isInitialized = true;
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -206,21 +244,25 @@ const authSlice = createSlice({
       })
       // Check Auth
       .addCase(checkAuth.pending, (state) => {
-        state.isLoading = true;
+        state.isCheckingAuth = true;
+        state.error = null;
       })
       .addCase(checkAuth.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = action.payload;
+        state.isCheckingAuth = false;
+        state.isInitialized = true;
+        state.user = action.payload as User;
         state.isAuthenticated = true;
         state.error = null;
       })
-      .addCase(checkAuth.rejected, (state) => {
-        state.isLoading = false;
+      .addCase(checkAuth.rejected, (state, action) => {
+        state.isCheckingAuth = false;
+        state.isInitialized = true;
         state.user = null;
         state.isAuthenticated = false;
+        state.error = (action.payload as string) ?? null;
       });
   },
 });
 
-export const { logout, clearError, setUser } = authSlice.actions;
+export const { logout, setUserRole, clearError, setUser } = authSlice.actions;
 export default authSlice.reducer;

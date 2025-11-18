@@ -3,9 +3,14 @@ import { logout, clearError } from "@/store/slices";
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
-  const { user, isAuthenticated, isLoading, error } = useAppSelector(
-    (state) => state.auth
-  );
+  const {
+    user,
+    isAuthenticated,
+    isLoading,
+    error,
+    isCheckingAuth,
+    isInitialized,
+  } = useAppSelector((state) => state.auth);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -20,6 +25,8 @@ export const useAuth = () => {
     isAuthenticated,
     isLoading,
     error,
+    isCheckingAuth,
+    isInitialized,
     logout: handleLogout,
     clearError: handleClearError,
   };

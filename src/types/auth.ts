@@ -4,6 +4,7 @@ export interface User {
   firstName: string;
   lastName: string;
   status: "PENDING" | "ACTIVE" | "INACTIVE";
+  role: "CUSTOMER" | "ADMIN" | "SELLER";
   avatar?: string;
   createdAt: string;
   updatedAt?: string;
@@ -13,6 +14,8 @@ export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isCheckingAuth: boolean;
+  isInitialized: boolean;
   error: string | null;
 }
 
@@ -27,13 +30,6 @@ export interface RegisterData {
   email: string;
   password: string;
   confirmPassword: string; // Only used for frontend validation, not sent to API
-}
-
-export interface RegisterApiData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
 }
 
 export interface RegisterApiData {

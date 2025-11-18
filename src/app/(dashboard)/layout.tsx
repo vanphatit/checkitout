@@ -1,24 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+// 1. Import RoleGuard (giả sử bạn đã tạo nó)
+import { RoleGuard } from "@/components/providers/RoleGuard";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { isAuthenticated, isLoading } = useAuth();
+// 2. Component layout gốc của bạn
+function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isCheckingAuth, isInitialized } = useAuth();
   const router = useRouter();
+  const isResolvingAuth = isCheckingAuth || !isInitialized;
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isResolvingAuth && !isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isResolvingAuth, router]);
 
-  if (isLoading) {
+  if (isResolvingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -38,13 +38,24 @@ export default function DashboardLayout({
             <div className="flex items-center">
               <h1 className="text-xl font-semibold">CheckItOut Dashboard</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              {/* Add user menu here */}
-            </div>
           </div>
         </div>
       </header>
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">{children}</main>
     </div>
+  );
+}
+
+// 3. Bọc layout gốc bằng RoleGuard
+export default function ProtectedDashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Chỉ cho phép CUSTOMER và ADMIN vào dashboard
+  return (
+    <RoleGuard allowedRoles={["CUSTOMER", "ADMIN"]}>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </RoleGuard>
   );
 }
