@@ -121,3 +121,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@theme {
+  --color-deep-navy: #000052;
+  --color-primary: #1868db;
+  --color-secondary: #DBEAFE;
+}
