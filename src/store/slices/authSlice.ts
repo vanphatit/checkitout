@@ -7,6 +7,7 @@ import {
   RegisterApiData,
   ForgotPasswordData,
   AuthResponse,
+  ApiResponse,
 } from "@/types/auth";
 import api from "@/lib/axios";
 import { getRoleFromToken, isTokenExpired } from "@/lib/jwt";
@@ -22,12 +23,29 @@ const initialState: AuthState = {
 };
 
 // Async thunks
+const extractResponseData = <T>(
+  payload: ApiResponse<T> | { data: T } | T
+): T => {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "data" in payload &&
+    (payload as { data?: T }).data !== undefined
+  ) {
+    return (payload as { data: T }).data;
+  }
+  return payload as T;
+};
+
 export const loginUser = createAsyncThunk(
   "auth/login",
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
-      const response = await api.post<AuthResponse>("/auth/login", credentials);
-      const { user, accessToken } = response.data;
+      const response = await api.post<AuthResponse | ApiResponse<AuthResponse>>(
+        "/auth/login",
+        credentials
+      );
+      const { user, accessToken } = extractResponseData(response.data);
 
       if (accessToken) {
         tokenStorage.setAccessToken(accessToken);

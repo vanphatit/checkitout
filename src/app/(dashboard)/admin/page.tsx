@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Activity,
   AlertTriangle,
+  BadgeCheck,
   Loader2,
   RefreshCw,
   Search,
@@ -13,6 +14,7 @@ import {
   UserPlus,
   Users as UsersIcon,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { RoleGuard } from "@/components/providers/RoleGuard";
@@ -344,6 +346,46 @@ function AdminManagementContent() {
   const to = users.length ? from + users.length - 1 : 0;
   const canDeleteSelected =
     !!selectedUser && authUser?.id !== selectedUser.id;
+  const overviewCards = useMemo(
+    () =>
+      [
+        {
+          title: "Total users",
+          value: meta.total,
+          description: "Across all roles",
+          icon: UsersIcon,
+          accent: "bg-primary/10 text-primary",
+        },
+        {
+          title: "Active accounts",
+          value: statusSummary.ACTIVE,
+          description: "Currently approved",
+          icon: BadgeCheck,
+          accent: "bg-green-100 text-green-700",
+        },
+        {
+          title: "Pending review",
+          value: statusSummary.PENDING,
+          description: "Need verification",
+          icon: AlertTriangle,
+          accent: "bg-yellow-100 text-yellow-700",
+        },
+        {
+          title: "Admin seats",
+          value: roleSummary.ADMIN,
+          description: "With elevated access",
+          icon: Shield,
+          accent: "bg-indigo-100 text-indigo-700",
+        },
+      ] satisfies Array<{
+        title: string;
+        value: number;
+        description: string;
+        icon: LucideIcon;
+        accent: string;
+      }>,
+    [meta.total, roleSummary.ADMIN, statusSummary.ACTIVE, statusSummary.PENDING]
+  );
 
   return (
     <div className="space-y-6">
@@ -381,6 +423,32 @@ function AdminManagementContent() {
           <span>{adminMessage}</span>
         </div>
       )}
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {overviewCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Card key={card.title}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardDescription>{card.title}</CardDescription>
+                <span
+                  className={`rounded-full p-2 text-sm font-semibold ${card.accent}`}
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-semibold tracking-tight">
+                  {card.value}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {card.description}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <Card>
@@ -536,69 +604,21 @@ function AdminManagementContent() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>At a glance</CardTitle>
-            <CardDescription>
-              Track adoption and activation per cohort.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-lg border border-dashed p-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <UsersIcon className="h-4 w-4 text-primary" />
-                Total users
-              </div>
-              <p className="text-3xl font-semibold">{meta.total}</p>
-            </div>
-            <div className="grid gap-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span>Active</span>
-                <span className="font-semibold text-green-600">
-                  {statusSummary.ACTIVE}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Pending</span>
-                <span className="font-semibold text-yellow-600">
-                  {statusSummary.PENDING}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Inactive</span>
-                <span className="font-semibold text-gray-600">
-                  {statusSummary.INACTIVE}
-                </span>
-              </div>
-            </div>
-            <div className="rounded-lg border p-4 text-sm">
-              <p className="font-medium text-gray-800">Role mix</p>
-              <div className="mt-2 space-y-1 text-muted-foreground">
-                <p>Admin: {roleSummary.ADMIN}</p>
-                <p>Seller: {roleSummary.SELLER}</p>
-                <p>Customer: {roleSummary.CUSTOMER}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
             <CardTitle>Selected user</CardTitle>
             <CardDescription>
-              View profile facts and the latest account activity.
+              Quick facts and the latest footprint for the highlighted account.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             {selectedUser ? (
-              <>
+              <div className="space-y-4">
                 <div className="rounded-md border bg-gray-50 p-4">
                   <div className="text-lg font-semibold text-gray-900">
                     {selectedUser.firstName} {selectedUser.lastName}
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {selectedUser.email}
-                  </div>
+                  </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadgeStyles[selectedUser.status]}`}
@@ -610,37 +630,28 @@ function AdminManagementContent() {
                     </span>
                   </div>
                 </div>
-                <dl className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <dt className="text-muted-foreground">Phone</dt>
-                    <dd className="font-medium">
+                <dl className="grid gap-3 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <dt>Phone</dt>
+                    <dd className="font-medium text-gray-900">
                       {selectedUser.phone ?? "Not provided"}
                     </dd>
                   </div>
-                  <div>
-                    <dt className="text-muted-foreground">Created</dt>
-                    <dd className="font-medium">
+                  <div className="flex items-center justify-between">
+                    <dt>Created</dt>
+                    <dd className="font-medium text-gray-900">
                       {new Date(selectedUser.createdAt).toLocaleDateString()}
                     </dd>
                   </div>
-                  <div>
-                    <dt className="text-muted-foreground">Updated</dt>
-                    <dd className="font-medium">
-                      {selectedUser.updatedAt
-                        ? new Date(selectedUser.updatedAt).toLocaleDateString()
-                        : "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Last login</dt>
-                    <dd className="font-medium">
+                  <div className="flex items-center justify-between">
+                    <dt>Last login</dt>
+                    <dd className="font-medium text-gray-900">
                       {selectedUser.lastLoginAt
                         ? new Date(selectedUser.lastLoginAt).toLocaleString()
                         : "—"}
                     </dd>
                   </div>
                 </dl>
-
                 <div>
                   <div className="flex items-center gap-2 text-sm font-medium text-gray-800">
                     <Activity className="h-4 w-4 text-primary" />
@@ -680,14 +691,18 @@ function AdminManagementContent() {
                     )}
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Select a user from the directory to view details.
+                Select a user from the directory to preview their details and
+                footprint.
               </p>
             )}
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Update account</CardTitle>
@@ -834,147 +849,146 @@ function AdminManagementContent() {
             )}
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Onboard a new user</CardTitle>
+            <CardDescription>
+              Provision access for admins, sellers, or customers.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...createUserForm}>
+              <form
+                onSubmit={createUserForm.handleSubmit(handleCreateUser)}
+                className="space-y-4"
+              >
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={createUserForm.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Jane" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createUserForm.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={createUserForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="jane@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createUserForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+84 912 345 678" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createUserForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Temporary password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Provide a secure password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={createUserForm.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Role</FormLabel>
+                        <FormControl>
+                          <select
+                            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
+                            {...field}
+                          >
+                            <option value="ADMIN">Admin</option>
+                            <option value="SELLER">Seller</option>
+                            <option value="CUSTOMER">Customer</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createUserForm.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <FormControl>
+                          <select
+                            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
+                            {...field}
+                          >
+                            <option value="ACTIVE">Active</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="INACTIVE">Inactive</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    New users will receive onboarding instructions via email.
+                  </p>
+                  <Button type="submit" disabled={isCreatingUser}>
+                    {isCreatingUser ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <UserPlus className="mr-2 h-4 w-4" />
+                    )}
+                    {isCreatingUser ? "Creating..." : "Create user"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Onboard a new user</CardTitle>
-          <CardDescription>
-            Provision access for admins, sellers, or customers.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...createUserForm}>
-            <form
-              onSubmit={createUserForm.handleSubmit(handleCreateUser)}
-              className="space-y-4"
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={createUserForm.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Jane" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createUserForm.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={createUserForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="jane@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={createUserForm.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+84 912 345 678" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={createUserForm.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Temporary password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Provide a secure password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={createUserForm.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Role</FormLabel>
-                      <FormControl>
-                        <select
-                          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
-                          {...field}
-                        >
-                          <option value="ADMIN">Admin</option>
-                          <option value="SELLER">Seller</option>
-                          <option value="CUSTOMER">Customer</option>
-                        </select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createUserForm.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <FormControl>
-                        <select
-                          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
-                          {...field}
-                        >
-                          <option value="ACTIVE">Active</option>
-                          <option value="PENDING">Pending</option>
-                          <option value="INACTIVE">Inactive</option>
-                        </select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <p className="text-sm text-muted-foreground">
-                  New users will receive onboarding instructions via email.
-                </p>
-                <Button type="submit" disabled={isCreatingUser}>
-                  {isCreatingUser ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <UserPlus className="mr-2 h-4 w-4" />
-                  )}
-                  {isCreatingUser ? "Creating..." : "Create user"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
     </div>
   );
 }

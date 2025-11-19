@@ -7,13 +7,11 @@ import {
   Activity as ActivityIcon,
   AlertTriangle,
   BadgeCheck,
-  CalendarClock,
   Loader2,
   Mail,
   Phone,
   RefreshCw,
   ShieldCheck,
-  UserCog,
 } from "lucide-react";
 
 import { useAuth, useAppDispatch } from "@/hooks";
@@ -116,7 +114,7 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     let isMounted = true;
 
     const fetchProfile = async () => {
@@ -151,7 +149,7 @@ export default function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, [dispatch, form, user]);
+  }, [dispatch, form, user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
