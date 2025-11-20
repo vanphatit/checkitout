@@ -1,43 +1,37 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { FaMoon, FaSun } from "react-icons/fa6";
 
 type ThemeType = "light" | "dark";
 
-const Theme: React.FC = () => {
+/**
+ * Simple local-storage backed theme toggle.
+ */
+const ThemeToggle: React.FC = () => {
   const [theme, setTheme] = useState<ThemeType>("light");
   const [mounted, setMounted] = useState(false);
 
-  // Chạy sau khi client đã mount → tránh mismatch
   useEffect(() => {
     const savedTheme = (localStorage.getItem("theme") as ThemeType) || "light";
     setTheme(savedTheme);
-
-    const root = document.documentElement;
-    root.classList.toggle("dark", savedTheme === "dark");
-
+    document.documentElement.classList.toggle("dark", savedTheme === "dark");
     setMounted(true);
   }, []);
 
-  // Apply lại khi theme thay đổi
   useEffect(() => {
     if (!mounted) return;
-
-    const root = document.documentElement;
-    root.classList.toggle("dark", theme === "dark");
-
+    document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
-  }, [theme, mounted]);
+  }, [mounted, theme]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
-  // CHẶN render icon trước khi mounted xong
   if (!mounted) {
     return (
-      <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800/80"></div>
+      <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800/80" />
     );
   }
 
@@ -52,4 +46,4 @@ const Theme: React.FC = () => {
   );
 };
 
-export default Theme;
+export default ThemeToggle;
