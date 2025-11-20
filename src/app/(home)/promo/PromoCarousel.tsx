@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Container from "@/app/components/layout/Container";
-import PromotionCard from "@/app/components/promotion/PromotionCard";
+import Container from "@/components/layout/Container";
+import PromotionCard from "@/components/promotion/PromotionCard";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 interface Promo {
@@ -13,20 +13,48 @@ interface Promo {
 }
 
 const promos: Promo[] = [
-  { id: 1, title: "Bus Promo 1", code: "BUS10", description: "Giảm 10% vé bus" },
-  { id: 2, title: "Bus Promo 2", code: "BUS20", description: "Giảm 20% vé bus" },
-  { id: 3, title: "Bus Promo 3", code: "BUS30", description: "Giảm 30% vé bus" },
-  { id: 4, title: "Bus Promo 4", code: "BUS40", description: "Giảm 40% vé bus" },
-  { id: 5, title: "Bus Promo 5", code: "BUS50", description: "Giảm 50% vé bus" },
+  {
+    id: 1,
+    title: "Bus Promo 1",
+    code: "BUS10",
+    description: "Giảm 10% vé bus",
+  },
+  {
+    id: 2,
+    title: "Bus Promo 2",
+    code: "BUS20",
+    description: "Giảm 20% vé bus",
+  },
+  {
+    id: 3,
+    title: "Bus Promo 3",
+    code: "BUS30",
+    description: "Giảm 30% vé bus",
+  },
+  {
+    id: 4,
+    title: "Bus Promo 4",
+    code: "BUS40",
+    description: "Giảm 40% vé bus",
+  },
+  {
+    id: 5,
+    title: "Bus Promo 5",
+    code: "BUS50",
+    description: "Giảm 50% vé bus",
+  },
 ];
 
 const PromoCarousel: React.FC = () => {
   const [startIndex, setStartIndex] = useState(0);
   const cardsToShow = 3;
 
-  const handlePrev = () => setStartIndex((prev) => Math.max(prev - cardsToShow, 0));
+  const handlePrev = () =>
+    setStartIndex((prev) => Math.max(prev - cardsToShow, 0));
   const handleNext = () =>
-    setStartIndex((prev) => Math.min(prev + cardsToShow, promos.length - cardsToShow));
+    setStartIndex((prev) =>
+      Math.min(prev + cardsToShow, promos.length - cardsToShow)
+    );
 
   const isAtStart = startIndex === 0;
   const isAtEnd = startIndex + cardsToShow >= promos.length;

@@ -1,6 +1,6 @@
 import React from "react";
-import Container from "@/app/components/layout/Container";
-import TopSearchCard from "@/app/components/topsearch/TopSearchCard";
+import Container from "@/components/layout/Container";
+import TopSearchCard from "@/components/topsearch/TopSearchCard";
 
 const defaultRoutes = [
   {
