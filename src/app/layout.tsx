@@ -31,13 +31,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ReduxProvider>
-          <div className="flex min-h-screen flex-col">
-            <Navbar />
-            <main className="flex-1 pt-20">{children}</main>
-            <Footer />
-          </div>
-        </ReduxProvider>
+        <ReduxProvider> {children}</ReduxProvider>
       </body>
     </html>
   );
