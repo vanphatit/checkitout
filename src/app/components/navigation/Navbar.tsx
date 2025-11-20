@@ -7,6 +7,10 @@ import { FaBars, FaPhone } from "react-icons/fa6";
 import { LiaTimesSolid } from "react-icons/lia";
 import Container from "../layout/Container";
 import ThemeToggle from "../theme/ThemeToggle";
+import { CircleUserRound, LogOut } from "lucide-react";
+
+import { useAuth } from "@/hooks";
+import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -18,6 +22,34 @@ const navLinks = [
 const Navbar: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const roleKey = (user?.role ?? "CUSTOMER").toUpperCase();
+
+  const roleStyles: Record<
+    string,
+    { border: string; text: string; bg: string; hover: string }
+  > = {
+    CUSTOMER: {
+      border: "border-primary",
+      text: "text-primary",
+      bg: "bg-primary/10",
+      hover: "hover:bg-primary/20",
+    },
+    ADMIN: {
+      border: "border-red-500",
+      text: "text-red-600",
+      bg: "bg-red-50",
+      hover: "hover:bg-red-100",
+    },
+    SELLER: {
+      border: "border-orange-400",
+      text: "text-orange-600",
+      bg: "bg-orange-50",
+      hover: "hover:bg-orange-100",
+    },
+  };
+
+  const roleStyle = roleStyles[roleKey] ?? roleStyles.CUSTOMER;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 80);
@@ -85,23 +117,54 @@ const Navbar: React.FC = () => {
           </ul>
 
           <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:pl-6 border-t lg:border-0 pt-3 lg:pt-0">
-            <Link
-              href="/login"
-              className="text-sm font-semibold text-neutral-800 hover:text-primary dark:text-neutral-200 dark:hover:text-white"
-            >
-              Login
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-md border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-transparent hover:text-primary dark:text-primary dark:bg-white dark:hover:bg-transparent dark:hover:text-white dark:border-primary"
-            >
-              Sign up
-            </Link>
-            <div className="hidden lg:flex items-center gap-2 text-primary font-semibold">
-              <FaPhone className="text-base" />
-              <span className="text-sm">+84 123 456 789</span>
-            </div>
-            <ThemeToggle />
+            {isAuthenticated && user ? (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className={`justify-center gap-2 rounded-full border ${roleStyle.border} ${roleStyle.bg} ${roleStyle.text} ${roleStyle.hover}`}
+                    onClick={() => setOpen(false)}
+                  >
+                    <Link href="/profile">
+                      <CircleUserRound className="h-4 w-4" />
+                      <span className="font-semibold">
+                        {user.firstName} {user.lastName}
+                      </span>
+                    </Link>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-full border border-neutral-200 text-neutral-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                    onClick={() => {
+                      logout();
+                      setOpen(false);
+                    }}
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-semibold text-neutral-800 hover:text-primary dark:text-neutral-200 dark:hover:text-white"
+                  onClick={() => setOpen(false)}
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/signup"
+                  className="rounded-md border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-transparent hover:text-primary dark:text-primary dark:bg-white dark:hover:bg-transparent dark:hover:text-white dark:border-primary"
+                  onClick={() => setOpen(false)}
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </Container>

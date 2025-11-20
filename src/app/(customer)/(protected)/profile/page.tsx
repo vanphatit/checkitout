@@ -6,9 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Activity as ActivityIcon,
   AlertTriangle,
-  BadgeCheck,
+  Clock3,
   Loader2,
   Mail,
+  MapPin,
+  MonitorSmartphone,
   Phone,
   RefreshCw,
   ShieldCheck,
@@ -41,36 +43,6 @@ const statusStyles: Record<User["status"], string> = {
   ACTIVE: "bg-green-100 text-green-700 border border-green-200",
   PENDING: "bg-yellow-100 text-yellow-700 border border-yellow-200",
   INACTIVE: "bg-gray-100 text-gray-700 border border-gray-200",
-};
-
-const roleHighlights: Record<
-  User["role"],
-  { title: string; tips: string[] }
-> = {
-  CUSTOMER: {
-    title: "Customer Insights",
-    tips: [
-      "Track your purchase history and wishlist from the dashboard.",
-      "Complete your profile to get personalized recommendations.",
-      "Enable notifications to stay updated with seller offers.",
-    ],
-  },
-  SELLER: {
-    title: "Seller Toolkit",
-    tips: [
-      "Keep your profile updated to build buyer trust.",
-      "Review analytics in the dashboard to optimize listings.",
-      "Use activity logs to monitor account changes.",
-    ],
-  },
-  ADMIN: {
-    title: "Admin Quick Actions",
-    tips: [
-      "Monitor activity logs for unusual events.",
-      "Use the admin panel to manage user status and roles.",
-      "Coordinate with sellers and customers through verified contacts.",
-    ],
-  },
 };
 
 const formatDate = (value?: string | null) => {
@@ -240,8 +212,6 @@ export default function ProfilePage() {
     }
   };
 
-  const insight = roleHighlights[profile?.role ?? "CUSTOMER"];
-
   if (!profile && (profileLoading || isCheckingAuth)) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -258,9 +228,8 @@ export default function ProfilePage() {
             Account Center
           </p>
           <h1 className="text-3xl font-semibold text-gray-900">
-            {profile
-              ? `${profile.firstName} ${profile.lastName}`
-              : "Profile"}
+            Welcome back,{" "}
+            {profile ? `${profile.firstName} ${profile.lastName}` : "Profile"} !
           </h1>
           <p className="text-gray-500">
             Manage your personal information, security preferences, and account
@@ -269,7 +238,11 @@ export default function ProfilePage() {
         </div>
         <div className="flex items-center gap-3">
           <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${profile ? statusStyles[profile.status] : "bg-gray-100 text-gray-600"}`}
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              profile
+                ? statusStyles[profile.status]
+                : "bg-gray-100 text-gray-600"
+            }`}
           >
             {profile?.status ?? "Unknown"}
           </span>
@@ -286,64 +259,8 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardDescription>Account age</CardDescription>
-            <CardTitle className="text-2xl">
-              {formatDate(profile?.createdAt)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Member since
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Last updated</CardDescription>
-            <CardTitle className="text-2xl">
-              {formatDate(profile?.updatedAt)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Profile changes
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Profile completion</CardDescription>
-            <CardTitle className="flex items-baseline gap-1 text-3xl">
-              {profileCompletion}
-              <span className="text-base text-muted-foreground">%</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-2 rounded-full bg-gray-200">
-              <div
-                className="h-2 rounded-full bg-primary transition-all"
-                style={{ width: `${profileCompletion}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Verification</CardDescription>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <BadgeCheck className="h-5 w-5 text-green-600" />
-              {profile?.emailVerifiedAt ? "Verified" : "Pending"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {profile?.emailVerifiedAt
-              ? `Verified on ${formatDate(profile.emailVerifiedAt)}`
-              : "Please verify your email to unlock all features."}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
             <CardDescription>
@@ -364,7 +281,10 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel>First name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your first name" {...field} />
+                          <Input
+                            placeholder="Enter your first name"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -377,7 +297,10 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel>Last name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your last name" {...field} />
+                          <Input
+                            placeholder="Enter your last name"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -387,10 +310,7 @@ export default function ProfilePage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <FormLabel>Email</FormLabel>
-                    <Input value={profile?.email ?? ""} disabled />
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Email changes are handled by support for security reasons.
-                    </p>
+                    <Input className="mt-2" value={profile?.email ?? ""} disabled />
                   </div>
                   <FormField
                     control={form.control}
@@ -426,39 +346,7 @@ export default function ProfilePage() {
             </Form>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{insight.title}</CardTitle>
-            <CardDescription>
-              Recommended steps for your {profile?.role?.toLowerCase() ?? "user"} account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="rounded-md border border-dashed border-primary/30 bg-primary/5 p-4">
-                <p className="text-sm font-semibold text-primary">
-                  Profile completion
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Finish filling your information to unlock personalized
-                  experiences.
-                </p>
-              </div>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                {insight.tips.map((tip) => (
-                  <li key={tip} className="flex items-start gap-2">
-                    <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                    <span>{tip}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Security Controls</CardTitle>
             <CardDescription>
@@ -478,7 +366,11 @@ export default function ProfilePage() {
                     <FormItem>
                       <FormLabel>Current password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Enter current password" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="Enter current password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -492,7 +384,11 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel>New password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Enter new password" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="Enter new password"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -505,7 +401,11 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel>Confirm new password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Confirm new password" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="Confirm new password"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -515,7 +415,9 @@ export default function ProfilePage() {
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <ShieldCheck className="h-4 w-4 text-primary" />
-                    <span>Use a unique password that you do not share elsewhere.</span>
+                    <span>
+                      Use a unique password that you do not share elsewhere.
+                    </span>
                   </div>
                   <Button type="submit" disabled={isUpdatingPassword}>
                     {isUpdatingPassword ? (
@@ -538,45 +440,6 @@ export default function ProfilePage() {
                 )}
               </form>
             </Form>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact and Alerts</CardTitle>
-            <CardDescription>
-              How we reach you about security and product news.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3 rounded-md border border-gray-200 bg-gray-50 p-3">
-              <Mail className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-sm font-medium">{profile?.email}</p>
-                <p className="text-xs text-muted-foreground">
-                  Primary email address
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 rounded-md border border-gray-200 bg-gray-50 p-3">
-              <Phone className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-sm font-medium">
-                  {profile?.phone ?? "No phone on file"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Used for multi-factor alerts and account recovery
-                </p>
-              </div>
-            </div>
-            <div className="rounded-md border border-gray-200 bg-white p-3">
-              <p className="text-sm font-medium">Recent login</p>
-              <p className="text-sm text-muted-foreground">
-                {formatDate(profile?.lastLoginAt)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                IP: {profile?.lastLoginIp ?? "—"}
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -602,36 +465,68 @@ export default function ProfilePage() {
               No recent account activities were found.
             </p>
           ) : (
-            <ul className="space-y-4">
-              {activities.map((activity) => (
-                <li
-                  key={`${activity.id}-${activity.createdAt}`}
-                  className="rounded-md border border-gray-200 p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {activity.action}
-                      </p>
-                      {activity.description && (
-                        <p className="text-sm text-muted-foreground">
-                          {activity.description}
-                        </p>
-                      )}
+            <div className="relative space-y-4">
+              <div className="absolute left-4 top-2 bottom-2 w-px bg-gradient-to-b from-primary/30 via-gray-200 to-primary/30" />
+              {activities.map((activity) => {
+                const actionLabel = activity.action ?? "Activity";
+                const actionUpper = actionLabel.toUpperCase();
+                const tone =
+                  actionUpper.includes("FAIL") || actionUpper.includes("ERROR")
+                    ? "text-red-600 bg-red-50 border-red-100"
+                    : actionUpper.includes("LOGIN")
+                    ? "text-emerald-700 bg-emerald-50 border-emerald-100"
+                    : actionUpper.includes("PASSWORD")
+                    ? "text-amber-700 bg-amber-50 border-amber-100"
+                    : "text-blue-700 bg-blue-50 border-blue-100";
+
+                return (
+                  <div
+                    key={`${activity.id}-${activity.createdAt}`}
+                    className="relative flex gap-3 pl-10"
+                  >
+                    <div className="absolute left-3 top-2 size-3 rounded-full border-2 border-white bg-primary shadow-sm" />
+                    <div className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${tone}`}>
+                            {actionLabel}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock3 className="h-3.5 w-3.5" />
+                            {formatDate(activity.createdAt)}
+                          </span>
+                        </div>
+                        {activity.description && (
+                          <p className="text-sm text-muted-foreground sm:text-right">
+                            {activity.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        {activity.ipAddress && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-3 py-1">
+                            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                            IP: {activity.ipAddress}
+                          </span>
+                        )}
+                        {activity.device && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-3 py-1">
+                            <MonitorSmartphone className="h-3.5 w-3.5 text-primary" />
+                            {activity.device}
+                          </span>
+                        )}
+                        {activity.location && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-3 py-1">
+                            <MapPin className="h-3.5 w-3.5 text-primary" />
+                            {activity.location}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(activity.createdAt)}
-                    </span>
                   </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {activity.ipAddress && <span>IP: {activity.ipAddress}</span>}
-                    {activity.device && (
-                      <span className="ml-2">Device: {activity.device}</span>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>

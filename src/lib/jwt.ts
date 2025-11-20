@@ -4,17 +4,25 @@ export function decodeJwt(token?: string | null) {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
-    const payload = JSON.parse(
+
+    // JWT uses base64url; normalize before decoding.
+    const normalizeBase64Url = (input: string) => {
+      const padded = input.replace(/-/g, "+").replace(/_/g, "/");
+      const paddingNeeded = 4 - (padded.length % 4);
+      return paddingNeeded < 4 ? padded + "=".repeat(paddingNeeded) : padded;
+    };
+
+    const payloadString = atob(normalizeBase64Url(parts[1]));
+    return JSON.parse(
       decodeURIComponent(
         Array.prototype.map
           .call(
-            atob(parts[1]),
+            payloadString,
             (c: string) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)
           )
           .join("")
       )
     );
-    return payload;
   } catch {
     return null;
   }

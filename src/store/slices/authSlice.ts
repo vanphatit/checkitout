@@ -160,17 +160,40 @@ export const checkAuth = createAsyncThunk(
     if (!token) {
       return thunkAPI.rejectWithValue("No access token");
     }
-    if (isTokenExpired(token)) {
-      tokenStorage.clearAccessToken();
-      return thunkAPI.rejectWithValue("Token expired");
+
+    let workingToken = token;
+
+    // If the access token is expired, attempt a refresh using the cookie-backed refresh token.
+    if (isTokenExpired(workingToken)) {
+      try {
+        const refreshRes = await api.post<{ accessToken: string; user?: User }>(
+          "/auth/refresh-token"
+        );
+        const { accessToken, user } = refreshRes.data;
+        if (!accessToken) {
+          tokenStorage.clearAccessToken();
+          return thunkAPI.rejectWithValue("Token expired");
+        }
+        tokenStorage.setAccessToken(accessToken);
+        workingToken = accessToken;
+
+        // If backend returns user with refresh, short-circuit without another /me call.
+        if (user) {
+          return user;
+        }
+      } catch (err) {
+        tokenStorage.clearAccessToken();
+        return thunkAPI.rejectWithValue("Token expired");
+      }
     }
 
     try {
-      const res = await api.get<{ user?: User } | User>("/auth/me");
-      const user = "user" in res.data ? res.data.user : res.data;
+      const res = await api.get<ApiResponse<User> | { user?: User } | User>("/auth/me");
+      const rawPayload = extractResponseData(res.data);
+      const user = (rawPayload as { user?: User }).user ?? (rawPayload as User | null);
 
       if (user && !user.role) {
-        const tokenRole = getRoleFromToken(token);
+        const tokenRole = getRoleFromToken(workingToken);
         if (tokenRole) {
           user.role = tokenRole as User["role"];
         }

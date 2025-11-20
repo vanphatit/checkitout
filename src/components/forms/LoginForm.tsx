@@ -48,7 +48,7 @@ export function LoginForm() {
     try {
       const result = await dispatch(loginUser(data));
       if (loginUser.fulfilled.match(result)) {
-        router.push("/dashboard");
+        router.push("/");
       } else if (loginUser.rejected.match(result)) {
         const error = result.payload as string;
         if (error.includes("verify your email") || error.includes("PENDING")) {
