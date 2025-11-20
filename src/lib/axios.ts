@@ -15,6 +15,10 @@ const api = axios.create({
 
 // Request interceptor to add auth token
 api.interceptors.request.use((config) => {
+  // Do not attach access token when calling refresh endpoint.
+  if (config.url?.includes("/auth/refresh-token")) {
+    return config;
+  }
   const token = tokenStorage.getAccessToken();
   if (token) {
     config.headers = config.headers ?? {};
@@ -49,7 +53,10 @@ api.interceptors.response.use(
         const response = await api.post<{ accessToken: string }>(
           "/auth/refresh-token"
         );
-        const { accessToken } = response.data;
+        const payload = (response.data as { accessToken?: string } & {
+          data?: { accessToken?: string };
+        }).data ?? response.data;
+        const { accessToken } = payload as { accessToken?: string };
         if (!accessToken) {
           tokenStorage.clearAccessToken();
           throw error;

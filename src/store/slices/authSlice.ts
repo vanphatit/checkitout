@@ -137,7 +137,7 @@ export const refreshTokens = createAsyncThunk(
       const response = await api.post<{ accessToken: string; user?: User }>(
         "/auth/refresh-token"
       );
-      const { accessToken, user } = response.data;
+      const { accessToken, user } = extractResponseData(response.data);
       if (!accessToken) {
         return rejectWithValue("Missing access token");
       }
@@ -156,30 +156,29 @@ export const refreshTokens = createAsyncThunk(
 export const checkAuth = createAsyncThunk(
   "auth/checkAuth",
   async (_, thunkAPI) => {
-    const token = tokenStorage.getAccessToken();
-    if (!token) {
-      return thunkAPI.rejectWithValue("No access token");
-    }
+    let workingToken = tokenStorage.getAccessToken();
 
-    let workingToken = token;
+    const attemptRefresh = async () => {
+      const refreshRes = await api.post(
+        "/auth/refresh-token"
+      );
+      const { accessToken, user } = extractResponseData(refreshRes.data);
+      if (!accessToken) {
+        throw new Error("Token expired");
+      }
+      tokenStorage.setAccessToken(accessToken);
+      workingToken = accessToken;
 
-    // If the access token is expired, attempt a refresh using the cookie-backed refresh token.
-    if (isTokenExpired(workingToken)) {
+      // If backend returns user with refresh, short-circuit without another /me call.
+      return user ?? null;
+    };
+
+    // If token missing or expired, try refresh via cookie-backed refresh token.
+    if (!workingToken || isTokenExpired(workingToken)) {
       try {
-        const refreshRes = await api.post<{ accessToken: string; user?: User }>(
-          "/auth/refresh-token"
-        );
-        const { accessToken, user } = refreshRes.data;
-        if (!accessToken) {
-          tokenStorage.clearAccessToken();
-          return thunkAPI.rejectWithValue("Token expired");
-        }
-        tokenStorage.setAccessToken(accessToken);
-        workingToken = accessToken;
-
-        // If backend returns user with refresh, short-circuit without another /me call.
-        if (user) {
-          return user;
+        const refreshedUser = await attemptRefresh();
+        if (refreshedUser) {
+          return refreshedUser;
         }
       } catch (err) {
         tokenStorage.clearAccessToken();

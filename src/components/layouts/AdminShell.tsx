@@ -4,7 +4,14 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutGrid, LogOut, ShieldCheck, Store } from "lucide-react";
+import {
+  BadgePercent,
+  BusFront,
+  LogOut,
+  Route,
+  Ticket,
+  Users,
+} from "lucide-react";
 
 import { RoleGuard } from "@/components/providers/RoleGuard";
 import { Button } from "@/components/ui/button";
@@ -22,9 +29,11 @@ export function AdminShell({ children }: AdminShellProps) {
 
   const navItems = useMemo(
     () => [
-      { href: "/admin", label: "Admin", icon: ShieldCheck, roles: ["ADMIN"] },
-      { href: "/seller", label: "Seller", icon: Store, roles: ["SELLER"] },
-      { href: "/dashboard", label: "Customer View", icon: LayoutGrid, roles: ["ADMIN", "SELLER"] },
+      { href: "/admin/users", label: "Người dùng", icon: Users, roles: ["ADMIN"] },
+      { href: "/admin/schedules", label: "Chuyến xe", icon: Route, roles: ["ADMIN"] },
+      { href: "/admin/tickets", label: "Vé", icon: Ticket, roles: ["ADMIN"] },
+      { href: "/admin/buses", label: "Xe", icon: BusFront, roles: ["ADMIN"] },
+      { href: "/admin/promotions", label: "Khuyến mãi", icon: BadgePercent, roles: ["ADMIN"] },
     ],
     []
   );
@@ -55,7 +64,7 @@ export function AdminShell({ children }: AdminShellProps) {
     <RoleGuard allowedRoles={["ADMIN", "SELLER"]}>
       <div className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-neutral-50 text-neutral-900">
         <header className="sticky top-0 z-30 border-b border-black/20 bg-black text-white shadow-lg">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-lg font-semibold text-white ring-1 ring-white/15">
                 C!
@@ -69,24 +78,28 @@ export function AdminShell({ children }: AdminShellProps) {
                 </p>
               </div>
             </div>
-            <nav className="flex items-center gap-2">
+            <nav className="flex items-center gap-1 sm:gap-2">
               {availableNav.map(({ href, label, icon: Icon }) => {
-                const active =
-                  pathname === href ||
-                  pathname?.startsWith(`${href}/`) ||
-                  (href === "/seller" && pathname?.startsWith("/seller"));
+                const active = pathname === href || pathname?.startsWith(`${href}/`);
                 return (
                   <Link
                     key={href}
                     href={href}
-                    className={`group flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    aria-label={label}
+                    title={label}
+                    className={`group flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
                       active
                         ? "bg-white text-black shadow-sm"
                         : "bg-white/10 text-gray-100 hover:bg-white/20"
                     }`}
                   >
-                    <Icon className={`h-4 w-4 ${active ? "text-black" : "text-gray-200"}`} />
-                    <span>{label}</span>
+                    <Icon
+                      className={`h-4 w-4 ${
+                        active ? "text-black" : "text-gray-200"
+                      }`}
+                    />
+                    <span className="sr-only md:hidden">{label}</span>
+                    <span className="hidden md:inline">{label}</span>
                   </Link>
                 );
               })}
@@ -113,35 +126,14 @@ export function AdminShell({ children }: AdminShellProps) {
           </div>
         </header>
 
-        <main className="mx-auto max-w-6xl px-6 py-10">
-          <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl shadow-black/5">
-            <div className="mb-6 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.28em] text-primary">
-                  {user?.role === "ADMIN" ? "Administrator" : "Seller"} mode
-                </p>
-                <h1 className="text-2xl font-semibold text-neutral-900">
-                  {user?.role === "ADMIN" ? "System oversight" : "Selling console"}
-                </h1>
-                <p className="text-sm text-neutral-500">
-                  Keep operations running smoothly with a clear, light workspace.
-                </p>
-              </div>
-              <div className="hidden rounded-full border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600 md:flex md:items-center md:gap-2">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                <span>Secured session</span>
-              </div>
-            </div>
-            <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 shadow-inner shadow-black/5">
-              {children}
-            </div>
-          </div>
-        </main>
+        <main className="mx-auto max-w-7xl px-6 py-10">{children}</main>
 
         <footer className="border-t border-neutral-200 bg-white">
           <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-6 text-sm text-neutral-600 sm:flex-row sm:items-center sm:justify-between">
             <span>CheckItOut Control • Light workspace</span>
-            <span className="text-neutral-500">Support: ops@checkitout.example</span>
+            <span className="text-neutral-500">
+              Support: ops@checkitout.example
+            </span>
           </div>
         </footer>
       </div>
