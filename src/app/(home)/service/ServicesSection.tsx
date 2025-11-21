@@ -1,6 +1,6 @@
 import React from "react";
-import Container from "@/app/components/layout/Container";
-import ServiceCard from "@/app/components/service/ServiceCard";
+import Container from "@/components/layout/Container";
+import ServiceCard from "@/components/service/ServiceCard";
 import { RiRefund2Line, RiSecurePaymentLine } from "react-icons/ri";
 import { PiHeadsetFill } from "react-icons/pi";
 

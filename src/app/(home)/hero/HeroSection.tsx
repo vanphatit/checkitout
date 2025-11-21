@@ -2,8 +2,8 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import Container from "@/app/components/layout/Container";
-import Search from "@/app/components/search/Search";
+import Container from "@/components/layout/Container";
+import Search from "@/components/search/Search";
 
 const variants = {
   hidden: { opacity: 0, y: -800 },
@@ -36,7 +36,8 @@ const HeroSection: React.FC = () => {
             transition={{ duration: 1.85, ease: "easeOut" }}
             className="text-5xl font-bold capitalize text-neutral-800"
           >
-            Find the <span className="text-primary">best bus tickets</span> below!
+            Find the <span className="text-primary">best bus tickets</span>{" "}
+            below!
           </motion.h1>
         </div>
 

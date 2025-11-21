@@ -34,25 +34,16 @@ const Footer: React.FC = () => {
             </div>
           </div>
           <div className="space-y-5">
-            <h2 className="text-lg text-neutral-100 font-semibold">Quick Links</h2>
+            <h2 className="text-lg text-neutral-100 font-semibold">
+              Quick Links
+            </h2>
             <div className="space-y-2">
-              {["About Us", "My Account", "Reserve your ticket", "Create your account"].map(
-                (label) => (
-                  <Link
-                    key={label}
-                    href="/"
-                    className="block text-base text-neutral-500 dark:text-neutral-200 hover:text-neutral-300 font-normal ease-in-out duration-300"
-                  >
-                    {label}
-                  </Link>
-                )
-              )}
-            </div>
-          </div>
-          <div className="space-y-5">
-            <h2 className="text-lg text-neutral-100 font-semibold">Top Reserve Routes</h2>
-            <div className="space-y-2">
-              {["A - B", "A - C", "A - C", "A - D"].map((label) => (
+              {[
+                "About Us",
+                "My Account",
+                "Reserve your ticket",
+                "Create your account",
+              ].map((label) => (
                 <Link
                   key={label}
                   href="/"
@@ -64,19 +55,40 @@ const Footer: React.FC = () => {
             </div>
           </div>
           <div className="space-y-5">
-            <h2 className="text-lg text-neutral-100 font-semibold">Support Links</h2>
+            <h2 className="text-lg text-neutral-100 font-semibold">
+              Top Reserve Routes
+            </h2>
             <div className="space-y-2">
-              {["Privacy Policy", "Terms & Conditions", "Help & Support Center", "FAQ"].map(
-                (label) => (
-                  <Link
-                    key={label}
-                    href="/"
-                    className="block text-base text-neutral-500 dark:text-neutral-200 hover:text-neutral-300 font-normal ease-in-out duration-300"
-                  >
-                    {label}
-                  </Link>
-                )
-              )}
+              {["A - B", "A - C", "A - D", "A - E"].map((label) => (
+                <Link
+                  key={label}
+                  href="/"
+                  className="block text-base text-neutral-500 dark:text-neutral-200 hover:text-neutral-300 font-normal ease-in-out duration-300"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-5">
+            <h2 className="text-lg text-neutral-100 font-semibold">
+              Support Links
+            </h2>
+            <div className="space-y-2">
+              {[
+                "Privacy Policy",
+                "Terms & Conditions",
+                "Help & Support Center",
+                "FAQ",
+              ].map((label) => (
+                <Link
+                  key={label}
+                  href="/"
+                  className="block text-base text-neutral-500 dark:text-neutral-200 hover:text-neutral-300 font-normal ease-in-out duration-300"
+                >
+                  {label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>

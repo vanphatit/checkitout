@@ -5,9 +5,6 @@ import { FaMoon, FaSun } from "react-icons/fa6";
 
 type ThemeType = "light" | "dark";
 
-/**
- * Simple local-storage backed theme toggle.
- */
 const ThemeToggle: React.FC = () => {
   const [theme, setTheme] = useState<ThemeType>("light");
   const [mounted, setMounted] = useState(false);
@@ -25,19 +22,11 @@ const ThemeToggle: React.FC = () => {
     localStorage.setItem("theme", theme);
   }, [mounted, theme]);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
-
-  if (!mounted) {
-    return (
-      <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800/80" />
-    );
-  }
+  if (!mounted) return null;
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
       className="dark:text-neutral-100 text-neutral-800 text-lg w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800/80 flex items-center justify-center transition-colors duration-300"
       aria-label="Toggle Theme"
     >
