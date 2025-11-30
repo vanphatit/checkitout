@@ -5,6 +5,7 @@ import Container from "./Container";
 interface TopBannerProps {
   bgImg: string;
   title?: string;
+  titleColor?: string;
   className?: string;
 }
 
@@ -13,10 +14,17 @@ const variants = {
   visible: { opacity: 1, y: 0 },
 };
 
-const TopBanner: React.FC<TopBannerProps> = ({ bgImg, title, className }) => {
+const TopBanner: React.FC<TopBannerProps> = ({
+  bgImg,
+  title,
+  titleColor = "text-neutral-800",
+  className,
+}) => {
   return (
     <motion.div
-      className={`w-full h-[30vh] bg-cover bg-no-repeat bg-center relative ${className || ""}`}
+      className={`w-full h-[30vh] bg-cover bg-no-repeat bg-center relative ${
+        className || ""
+      }`}
       style={{ backgroundImage: `url(${bgImg})` }}
       initial="hidden"
       animate="visible"
@@ -24,12 +32,12 @@ const TopBanner: React.FC<TopBannerProps> = ({ bgImg, title, className }) => {
       variants={variants}
       transition={{ duration: 0.85, ease: "easeInOut" }}
     >
-      <Container className="absolute top-0 left-0 w-full h-full pb-10 pt-[9ch] bg-gradient-to-b from-neutral-200/90 via-neutral-500/60 to-neutral-900/70 flex items-center justify-end flex-col gap-3">
+      <Container className="absolute top-0 left-0 w-full h-full pb-10 pt-[9ch] bg-gradient-to-b from-neutral-600/90 via-neutral-600/60 to-neutral-900/70 flex items-center justify-end flex-col gap-3">
         <motion.h1
           initial={{ opacity: 0, y: -800 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.85, ease: "easeOut" }}
-          className="text-5xl text-neutral-800 font-bold capitalize"
+          className={`text-5xl ${titleColor} font-bold capitalize`}
         >
           {title}
         </motion.h1>

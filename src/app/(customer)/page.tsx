@@ -1,7 +1,7 @@
-import HeroSection from "@/app/(home)/hero/HeroSection";
-import ServicesSection from "@/app/(home)/service/ServicesSection";
-import TopSearchSection from "@/app/(home)/search/TopSearchSection";
-import PromoCarousel from "@/app/(home)/promo/PromoCarousel";
+import HeroSection from "@/components/home/hero/HeroSection";
+import ServicesSection from "@/components/home/service/ServicesSection";
+import TopSearchSection from "@/components/home/search/TopSearchSection";
+import PromoCarousel from "@/components/home/promo/PromoCarousel";
 
 const HomePage: React.FC = () => {
   return (
