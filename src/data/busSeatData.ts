@@ -1,50 +1,42 @@
-type SeatStatusType = 'SOLD' | 'EMPTY' | 'PENDING';
+type SeatStatusType = "SOLD" | "EMPTY";
 
 interface BusSeat {
-    id: string;
+    seatNo: string;
     status: SeatStatusType;
 }
 
 const busSeatData: BusSeat[] = [
+    { seatNo: "1", status: "EMPTY" },
+    { seatNo: "2", status: "SOLD" },
+    { seatNo: "3", status: "EMPTY" },
+    { seatNo: "4", status: "EMPTY" },
+    { seatNo: "5", status: "EMPTY" },
+    { seatNo: "6", status: "SOLD" },
+    { seatNo: "7", status: "EMPTY" },
 
-    { id: 'A1', status: "SOLD" },
-    { id: 'A3', status: "SOLD" },
-    { id: 'A6', status: "PENDING" },
-    { id: 'A9', status: "EMPTY" },
-    { id: 'A12', status: "EMPTY" },
-    { id: 'A15', status: "SOLD" },
+    { seatNo: "8", status: "SOLD" },
+    { seatNo: "9", status: "EMPTY" },
+    { seatNo: "10", status: "EMPTY" },
+    { seatNo: "11", status: "EMPTY" },
+    { seatNo: "12", status: "SOLD" },
+    { seatNo: "13", status: "EMPTY" },
+    { seatNo: "14", status: "EMPTY" },
 
-    { id: 'A4', status: "PENDING" },
-    { id: 'A7', status: "EMPTY" },
-    { id: 'A10', status: "EMPTY" },
-    { id: 'A13', status: "PENDING" },
-    { id: 'A16', status: "SOLD" },
+    { seatNo: "15", status: "EMPTY" },
+    { seatNo: "16", status: "SOLD" },
+    { seatNo: "17", status: "EMPTY" },
+    { seatNo: "18", status: "EMPTY" },
+    { seatNo: "19", status: "EMPTY" },
+    { seatNo: "20", status: "SOLD" },
+    { seatNo: "21", status: "EMPTY" },
 
-    { id: 'A2', status: "SOLD" },
-    { id: 'A5', status: "SOLD" },
-    { id: 'A8', status: "EMPTY" },
-    { id: 'A11', status: "EMPTY" },
-    { id: 'A14', status: "PENDING" },
-    { id: 'A17', status: "SOLD" },
-
-    { id: 'B1', status: "SOLD" },
-    { id: 'B3', status: "SOLD" },
-    { id: 'B6', status: "PENDING" },
-    { id: 'B9', status: "EMPTY" },
-    { id: 'B12', status: "EMPTY" },
-    { id: 'B15', status: "SOLD" },
-
-    { id: 'B4', status: "PENDING" },
-    { id: 'B7', status: "EMPTY" },
-    { id: 'B10', status: "EMPTY" },
-    { id: 'B13', status: "PENDING" },
-    { id: 'B16', status: "SOLD" },
-
-    { id: 'B2', status: "SOLD" },
-    { id: 'B5', status: "SOLD" },
-    { id: 'B8', status: "EMPTY" },
-    { id: 'B11', status: "EMPTY" },
-    { id: 'B14', status: "PENDING" },
-    { id: 'B17', status: "SOLD" },
+    { seatNo: "22", status: "SOLD" },
+    { seatNo: "23", status: "EMPTY" },
+    { seatNo: "24", status: "EMPTY" },
+    { seatNo: "25", status: "EMPTY" },
+    { seatNo: "26", status: "SOLD" },
+    { seatNo: "27", status: "EMPTY" },
+    { seatNo: "28", status: "EMPTY" },
 ];
+
 export default busSeatData;
