@@ -1,11 +1,16 @@
 "use client";
-import * as React from "react";
+
 import Container from "@/components/layout/Container";
 import TopBanner from "@/components/layout/TopBanner";
 import Link from "next/link";
 import WarningAlert from "@/components/alertmessage/WarningAlert";
 import BusSeat from "@/components/busseat/BusSeat";
-const Detail: React.FC = () => {
+import { BusTicketCheckInProps } from "@/types/bus";
+
+export default function BusTicketCheckIn({
+  busId,
+  type,
+}: BusTicketCheckInProps) {
   const warningMessage = (
     <>
       One individual only can book 3 seats. If you want to book more seats.
@@ -25,22 +30,18 @@ const Detail: React.FC = () => {
       />
 
       <Container className="space-y-12 w-full pb-16">
-        {/* Seat layout and selection action detail */}
+        {/* Seat layout and selection */}
         <div className="w-full space-y-8">
-          {/* Warning message */}
           <WarningAlert message={warningMessage} />
 
-          {/* Seat layout */}
-          <BusSeat />
+          <BusSeat busId={busId} type={type} />
         </div>
 
-        {/* Booking summary and payment action detail */}
+        {/* Booking summary */}
         <div className="w-full flex flex-col items-center gap-8 text-center">
-          {/* Content booking summary */}
+          {/* Summary content */}
         </div>
       </Container>
     </div>
   );
-};
-
-export default Detail;
+}
