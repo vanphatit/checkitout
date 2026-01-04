@@ -1,24 +1,31 @@
 "use client";
-import * as React from "react";
-import busSeatData from "@/data/busSeatData";
-import busSleepData from "@/data/busSleepData";
+import React, { useState, useEffect } from "react";
 
 import SeatLegend from "@/components/busseat/seat/SeatLegend";
 import SeatGrid from "@/components/busseat/seat/SeatGrid";
 import BookingSummary from "@/components/busseat/BookingSummary";
 import ErrorMessage from "@/components/alertmessage/error/ErrorMessage";
+import { Bus, BusType } from "@/types/bus";
+import { Route } from "@/types/booking";
+import { Seat } from "@/types/seat";
 
 interface BusSeatProps {
-  busId: string;
-  type: "SLEEPER" | "SEATER";
+  busData: Bus;
+  routeData: Route;
+  seatData: Seat[];
+  price: number;
 }
 
-const BusSeat: React.FC<BusSeatProps> = ({ busId, type }) => {
-  const [selectedSeats, setSelectedSeats] = React.useState<string[]>([]);
-  const [showError, setShowError] = React.useState(false);
+const BusSeat: React.FC<BusSeatProps> = ({
+  busData,
+  routeData,
+  seatData,
+  price,
+}) => {
+  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [showError, setShowError] = useState(false);
 
-  // const data = type === "SLEEPER" ? busSleepData : busSeatData;
-  const data = busSeatData;
+  const data = seatData;
 
   const handleSeatClick = (seatId: string) => {
     const seat = data.find((s) => s.seatNo === seatId);
@@ -36,7 +43,7 @@ const BusSeat: React.FC<BusSeatProps> = ({ busId, type }) => {
     });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (showError) {
       const timer = setTimeout(() => setShowError(false), 2500);
       return () => clearTimeout(timer);
@@ -50,7 +57,7 @@ const BusSeat: React.FC<BusSeatProps> = ({ busId, type }) => {
         <SeatLegend />
 
         <SeatGrid
-          type={"SEATER"}
+          type={busData.type as BusType}
           data={data}
           selectedSeats={selectedSeats}
           onSeatClick={handleSeatClick}
@@ -61,9 +68,9 @@ const BusSeat: React.FC<BusSeatProps> = ({ busId, type }) => {
       <div className="col-span-1 md:col-span-2 w-full mt-4 md:mt-0">
         <BookingSummary
           selectedSeats={selectedSeats}
-          busId={busId}
-          type={type}
-          price="160000"
+          data={data}
+          price={price}
+          routeData={routeData}
         />
       </div>
 

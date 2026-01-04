@@ -1,16 +1,22 @@
-"use client";
-
 import Container from "@/components/layout/Container";
 import TopBanner from "@/components/layout/TopBanner";
 import Link from "next/link";
 import WarningAlert from "@/components/alertmessage/WarningAlert";
 import BusSeat from "@/components/busseat/BusSeat";
-import { BusTicketCheckInProps } from "@/types/bus";
+import { bookingService } from "@/services/bookingService";
+import { seatService } from "@/services/seatService";
 
-export default function BusTicketCheckIn({
-  busId,
-  type,
-}: BusTicketCheckInProps) {
+export default async function BusTicketCheckIn({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const { id } = await params;
+  const data = await bookingService.getSchedulingById(id);
+  const busData = data.busIds[0];
+  const seatData = await seatService.getSeatsByBusId(data.busIds[0]._id);
+  const routeData = data.routeId;
+  const price = data.price;
   const warningMessage = (
     <>
       One individual only can book 3 seats. If you want to book more seats.
@@ -25,7 +31,7 @@ export default function BusTicketCheckIn({
     <div className="w-full min-h-screen space-y-16 pb-16">
       <TopBanner
         bgImg="/assets/images/seats.png"
-        title="Bus Details"
+        title={`${busData.plateNo} - ${busData.driverName}`}
         titleColor="text-cream"
       />
 
@@ -34,7 +40,12 @@ export default function BusTicketCheckIn({
         <div className="w-full space-y-8">
           <WarningAlert message={warningMessage} />
 
-          <BusSeat busId={busId} type={type} />
+          <BusSeat
+            busData={busData}
+            routeData={routeData}
+            seatData={seatData}
+            price={price}
+          />
         </div>
 
         {/* Booking summary */}
