@@ -1,15 +1,19 @@
 import Link from "next/link";
-import busSeatData from "@/data/busSeatData";
 import { BookingSummaryProps } from "@/types/bus";
 
 export default function BookingSummary({
   selectedSeats,
-  busId,
-  type,
+  price,
+  data,
+  routeData,
 }: BookingSummaryProps) {
+  const routeName = routeData.name;
+
+  const [from, to] = routeName.split(" - ");
+
   const total = selectedSeats.reduce((sum, seatId) => {
-    const seat = busSeatData.find((x) => x.seatNo === seatId);
-    return sum + (seat ? 160_000 : 0);
+    const seat = data.find((x) => x.seatNo === seatId);
+    return sum + (seat ? price : 0);
   }, 0);
 
   return (
@@ -30,19 +34,25 @@ export default function BookingSummary({
 
         <div className="space-y-1">
           <p className="text-sm text-neutral-400">
-            From <span>HCM</span>
+            From <span>{from}</span>
           </p>
           <p className="text-sm text-neutral-400">
-            To <span>Ha Noi</span>
+            To <span>{to}</span>
           </p>
 
           <div className="flex items-center gap-2">
             <h1 className="text-sm text-neutral-600">
-              Start <span className="font-medium">(06:15 pm)</span>
+              Start{" "}
+              <span className="font-medium">
+                ({routeData.operatingHours.start})
+              </span>
             </h1>
             <div className="flex-1 border-dashed border border-neutral-300" />
             <h1 className="text-sm text-neutral-600">
-              End <span className="font-medium">(8:15 am)</span>
+              End{" "}
+              <span className="font-medium">
+                ({routeData.operatingHours.end})
+              </span>
             </h1>
           </div>
         </div>
@@ -73,7 +83,9 @@ export default function BookingSummary({
         <div className="space-y-4">
           <div className="flex items-center justify-between border-dashed border-l pl-2">
             <h3 className="text-sm text-neutral-500">Basic Fare:</h3>
-            <p className="text-sm text-neutral-600">160.000 VND</p>
+            <p className="text-sm text-neutral-600">
+              {price.toLocaleString()} VND
+            </p>
           </div>
 
           <div className="flex items-center justify-between">

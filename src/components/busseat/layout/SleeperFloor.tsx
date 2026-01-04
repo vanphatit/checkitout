@@ -28,7 +28,9 @@ export default function SleeperFloor({
           <button
             key={seatNo}
             disabled={isSold}
-            onClick={() => onSeatClick(seatNo)}
+            onClick={() => {
+              onSeatClick(seatNo);
+            }}
             className="flex flex-col items-center"
           >
             <LuArmchair
