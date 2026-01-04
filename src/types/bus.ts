@@ -1,7 +1,7 @@
 import { Route } from "./booking";
 import { Seat } from "./seat";
 
-export type BusType = "SLEEPER" | "SEATER";
+export type BusType = "SLEEPER" | "SEATER" | "SEAT"; // SEAT for backward compatibility with backend
 
 export interface BusTicketCheckInProps {
   busId: string;
@@ -13,6 +13,10 @@ export interface BookingSummaryProps {
   price: number;
   data: Seat[];
   routeData: Route;
+  etd?: string;
+  eta?: string;
+  distance?: number;
+  estimatedDuration?: number;
 }
 
 export interface Bus {

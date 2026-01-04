@@ -1,11 +1,38 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { TbArrowsExchange } from "react-icons/tb";
 import { FaMapMarkedAlt, FaSearch } from "react-icons/fa";
+import { StationAutocomplete } from "./StationAutocomplete";
+import { getCurrentDate } from "@/lib/formatters";
 
 const Search: React.FC = () => {
+  const router = useRouter();
+  const [fromLocation, setFromLocation] = useState("");
+  const [toLocation, setToLocation] = useState("");
+  const [selectedDate, setSelectedDate] = useState(getCurrentDate());
+
+  const handleSwap = () => {
+    const temp = fromLocation;
+    setFromLocation(toLocation);
+    setToLocation(temp);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Build query params
+    const params = new URLSearchParams();
+    if (fromLocation) params.append("from", fromLocation);
+    if (toLocation) params.append("to", toLocation);
+    if (selectedDate) params.append("date", selectedDate);
+
+    // Redirect to scheduling page
+    router.push(`/scheduling?${params.toString()}`);
+  };
+
   return (
     <motion.form
       initial={{ opacity: 0, y: -800 }}
@@ -13,33 +40,32 @@ const Search: React.FC = () => {
       exit={{ opacity: 0, y: -800 }}
       transition={{ duration: 1.5, ease: "easeOut" }}
       className="w-full bg-neutral-50/20 border-2 border-neutral-300 shadow-lg rounded-xl p-5 mt-5"
-      onSubmit={(e) => e.preventDefault()}
+      onSubmit={handleSearch}
     >
       <div className="w-full flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="lg:w-[60%] flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-5 relative">
-          <label className="w-full lg:w-1/2 h-14 border-neutral-300 bg-white/70 text-base text-neutral-700 font-medium px-5 flex items-center gap-x-1 rounded-lg">
-            <span className="sr-only">From</span>
-            <input
-              type="text"
-              placeholder="From..."
-              className="flex-1 h-full border-none bg-transparent focus:outline-none"
+          <div className="w-full lg:w-1/2">
+            <StationAutocomplete
+              value={fromLocation}
+              onChange={setFromLocation}
+              placeholder="Điểm xuất phát..."
+              icon={<FaMapMarkedAlt className="w-5 h-5" />}
             />
-            <FaMapMarkedAlt className="w-5 h-5 text-neutral-400" />
-          </label>
+          </div>
 
-          <label className="w-full lg:w-1/2 h-14 border-neutral-300 bg-white/70 text-base text-neutral-700 font-medium px-5 flex items-center gap-x-1 rounded-lg">
-            <span className="sr-only">To</span>
-            <input
-              type="text"
-              placeholder="To..."
-              className="flex-1 h-full border-none bg-transparent focus:outline-none"
+          <div className="w-full lg:w-1/2">
+            <StationAutocomplete
+              value={toLocation}
+              onChange={setToLocation}
+              placeholder="Điểm đến..."
+              icon={<FaMapMarkedAlt className="w-5 h-5" />}
             />
-            <FaMapMarkedAlt className="w-5 h-5 text-neutral-400" />
-          </label>
+          </div>
 
           <button
             type="button"
-            className="lg:absolute lg:w-11 w-full lg:h-6 h-11 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 rounded-full flex items-center justify-center bg-primary text-neutral-50"
+            onClick={handleSwap}
+            className="lg:absolute lg:w-11 w-full lg:h-6 h-11 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 rounded-full flex items-center justify-center bg-primary text-neutral-50 hover:bg-primary/90 transition-colors"
             aria-label="Swap routes"
           >
             <TbArrowsExchange className="w-6 h-6" />
@@ -51,6 +77,8 @@ const Search: React.FC = () => {
             <span className="sr-only">Date</span>
             <input
               type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
               className="flex-1 h-full border-none bg-transparent focus:outline-none"
             />
           </label>

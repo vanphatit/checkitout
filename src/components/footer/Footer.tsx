@@ -1,11 +1,48 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import Container from "../layout/Container";
 import { FaInstagram, FaX, FaYoutube } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
+import { getCurrentDate } from "@/lib/formatters";
+import { routeService, RouteData } from "@/services/routeService";
 
 const Footer: React.FC = () => {
+  const router = useRouter();
+  const [routes, setRoutes] = useState<RouteData[]>([]);
+
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      try {
+        const data = await routeService.getAllRoutes();
+        // Take first 4 routes for footer
+        setRoutes(data.slice(0, 4));
+      } catch (error) {
+        console.error("Error fetching routes:", error);
+      }
+    };
+    fetchRoutes();
+  }, []);
+
+  const extractStations = (routeName: string) => {
+    const parts = routeName.split(" - ");
+    return {
+      from: parts[0] || "",
+      to: parts[1] || "",
+    };
+  };
+
+  const handleRouteClick = (from: string, to: string) => {
+    const params = new URLSearchParams();
+    params.append("from", from);
+    params.append("to", to);
+    params.append("date", getCurrentDate());
+    router.push(`/scheduling?${params.toString()}`);
+  };
+
   return (
     <footer className="w-full bg-neutral-950 dark:bg-primary py-12">
       <Container className="space-y-10">
@@ -59,15 +96,22 @@ const Footer: React.FC = () => {
               Top Reserve Routes
             </h2>
             <div className="space-y-2">
-              {["A - B", "A - C", "A - D", "A - E"].map((label) => (
-                <Link
-                  key={label}
-                  href="/"
-                  className="block text-base text-neutral-500 dark:text-neutral-200 hover:text-neutral-300 font-normal ease-in-out duration-300"
-                >
-                  {label}
-                </Link>
-              ))}
+              {routes.length > 0 ? (
+                routes.map((route) => {
+                  const { from, to } = extractStations(route.name);
+                  return (
+                    <button
+                      key={route._id}
+                      onClick={() => handleRouteClick(from, to)}
+                      className="block text-base text-neutral-500 dark:text-neutral-200 hover:text-neutral-300 font-normal ease-in-out duration-300 text-left"
+                    >
+                      {from} - {to}
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="text-sm text-neutral-500">Loading routes...</div>
+              )}
             </div>
           </div>
           <div className="space-y-5">
