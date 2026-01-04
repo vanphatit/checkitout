@@ -14,6 +14,10 @@ interface BusSeatProps {
   routeData: Route;
   seatData: Seat[];
   price: number;
+  etd?: string;
+  eta?: string;
+  distance?: number;
+  estimatedDuration?: number;
 }
 
 const BusSeat: React.FC<BusSeatProps> = ({
@@ -21,6 +25,10 @@ const BusSeat: React.FC<BusSeatProps> = ({
   routeData,
   seatData,
   price,
+  etd,
+  eta,
+  distance,
+  estimatedDuration,
 }) => {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [showError, setShowError] = useState(false);
@@ -71,6 +79,10 @@ const BusSeat: React.FC<BusSeatProps> = ({
           data={data}
           price={price}
           routeData={routeData}
+          etd={etd}
+          eta={eta}
+          distance={distance}
+          estimatedDuration={estimatedDuration}
         />
       </div>
 

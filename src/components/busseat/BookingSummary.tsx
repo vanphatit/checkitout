@@ -6,6 +6,10 @@ export default function BookingSummary({
   price,
   data,
   routeData,
+  etd,
+  eta,
+  distance,
+  estimatedDuration,
 }: BookingSummaryProps) {
   const routeName = routeData.name;
 
@@ -15,6 +19,12 @@ export default function BookingSummary({
     const seat = data.find((x) => x.seatNo === seatId);
     return sum + (seat ? price : 0);
   }, 0);
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
 
   return (
     <div className="bg-neutral-50 rounded-xl py-4 px-6 border border-neutral-200 shadow-sm">
@@ -34,27 +44,38 @@ export default function BookingSummary({
 
         <div className="space-y-1">
           <p className="text-sm text-neutral-400">
-            From <span>{from}</span>
+            From <span className="font-medium text-neutral-600">{from}</span>
           </p>
           <p className="text-sm text-neutral-400">
-            To <span>{to}</span>
+            To <span className="font-medium text-neutral-600">{to}</span>
           </p>
 
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm text-neutral-600">
-              Start{" "}
-              <span className="font-medium">
-                ({routeData.operatingHours.start})
+          {etd && eta && (
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm text-neutral-600">
+                Start <span className="font-medium">({etd})</span>
+              </h1>
+              <div className="flex-1 border-dashed border border-neutral-300" />
+              <h1 className="text-sm text-neutral-600">
+                End <span className="font-medium">({eta})</span>
+              </h1>
+            </div>
+          )}
+
+          {distance && (
+            <p className="text-sm text-neutral-500">
+              Distance: <span className="font-medium text-neutral-600">{distance}km</span>
+            </p>
+          )}
+
+          {estimatedDuration && (
+            <p className="text-sm text-neutral-500">
+              Duration:{" "}
+              <span className="font-medium text-neutral-600">
+                {formatDuration(estimatedDuration)}
               </span>
-            </h1>
-            <div className="flex-1 border-dashed border border-neutral-300" />
-            <h1 className="text-sm text-neutral-600">
-              End{" "}
-              <span className="font-medium">
-                ({routeData.operatingHours.end})
-              </span>
-            </h1>
-          </div>
+            </p>
+          )}
         </div>
 
         {/* Selected seats */}

@@ -1,10 +1,22 @@
 import { Bus, BusType } from "./bus";
 
+export interface Station {
+  _id: string;
+  name: string;
+  address: string;
+  location?: {
+    type: string;
+    coordinates: [number, number]; // [lng, lat]
+  };
+}
+
 export interface Route {
   _id: string;
   name: string;
-  stationIds: string[];
+  stationIds: Station[];
   distance: number;
+  etd?: string; // "08:00"
+  estimatedDuration?: number; // minutes
   description: string;
   isActive: boolean;
   basePrice: number;
@@ -16,6 +28,12 @@ export interface Route {
   operatingDays: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Station {
+  _id: string;
+  name: string;
+  address: string;
 }
 
 export interface Driver {

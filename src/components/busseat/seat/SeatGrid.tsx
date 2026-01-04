@@ -11,9 +11,11 @@ interface SeatGridProps {
 }
 
 export default function SeatGrid(props: SeatGridProps) {
-  if (props.type === "SLEEPER") {
+  // Map SEAT to SEATER for backward compatibility
+  const busType = props.type === "SEAT" ? "SEATER" : props.type;
+
+  if (busType === "SLEEPER") {
     return <SleeperLayout {...props} />;
   }
-
   return <SeaterLayout {...props} />;
 }

@@ -1,47 +1,50 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Container from "@/components/layout/Container";
 import TopSearchCard from "@/components/topsearch/TopSearchCard";
-
-const defaultRoutes = [
-  {
-    routeFrom: "New York",
-    routeTo: "Washington D.C.",
-    timeDuration: "3Hrs",
-    price: "$120.00",
-  },
-  {
-    routeFrom: "Boston",
-    routeTo: "New York",
-    timeDuration: "4Hrs",
-    price: "$150.00",
-  },
-  {
-    routeFrom: "Chicago",
-    routeTo: "Detroit",
-    timeDuration: "5Hrs",
-    price: "$90.00",
-  },
-  {
-    routeFrom: "Seattle",
-    routeTo: "Portland",
-    timeDuration: "3.5Hrs",
-    price: "$110.00",
-  },
-  {
-    routeFrom: "San Diego",
-    routeTo: "Los Angeles",
-    timeDuration: "2.5Hrs",
-    price: "$85.00",
-  },
-  {
-    routeFrom: "Dallas",
-    routeTo: "Austin",
-    timeDuration: "3Hrs",
-    price: "$95.00",
-  },
-];
+import { routeService, RouteData } from "@/services/routeService";
 
 const TopSearchSection: React.FC = () => {
+  const [routes, setRoutes] = useState<RouteData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      try {
+        const data = await routeService.getAllRoutes();
+        // Take first 6 routes
+        setRoutes(data.slice(0, 6));
+      } catch (error) {
+        console.error("Error fetching routes:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRoutes();
+  }, []);
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
+  };
+
+  const extractStations = (routeName: string) => {
+    const parts = routeName.split(" - ");
+    return {
+      from: parts[0] || "",
+      to: parts[1] || "",
+    };
+  };
+
   return (
     <Container className="space-y-12">
       <div className="w-full text-center">
@@ -49,17 +52,26 @@ const TopSearchSection: React.FC = () => {
           Top Search <span className="text-primary">Routes</span>
         </h2>
       </div>
-      <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {defaultRoutes.map((item) => (
-          <TopSearchCard
-            key={`${item.routeFrom}-${item.routeTo}`}
-            routeFrom={item.routeFrom}
-            routeTo={item.routeTo}
-            timeDuration={item.timeDuration}
-            price={item.price}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {routes.map((route) => {
+            const { from, to } = extractStations(route.name);
+            return (
+              <TopSearchCard
+                key={route._id}
+                routeFrom={from}
+                routeTo={to}
+                timeDuration={formatDuration(route.estimatedDuration || 0)}
+                price={formatPrice(route.basePrice || 0)}
+              />
+            );
+          })}
+        </div>
+      )}
     </Container>
   );
 };
