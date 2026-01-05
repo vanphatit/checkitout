@@ -26,6 +26,17 @@ const SeatLegend = () => {
           Selected
         </p>
       </div>
+
+      {/* Locked by others */}
+      <div className="flex flex-col items-center gap-y-0.5 group cursor-pointer">
+        <div className="relative">
+          <LuArmchair className="text-lg text-orange-400 opacity-60 transition-transform duration-200 group-hover:scale-110 group-hover:opacity-80" />
+          <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full" />
+        </div>
+        <p className="text-xs text-orange-400 font-medium group-hover:text-orange-600">
+          Locked
+        </p>
+      </div>
     </div>
   );
 };

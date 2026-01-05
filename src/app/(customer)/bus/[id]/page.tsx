@@ -2,7 +2,7 @@ import Container from "@/components/layout/Container";
 import TopBanner from "@/components/layout/TopBanner";
 import Link from "next/link";
 import WarningAlert from "@/components/alertmessage/WarningAlert";
-import BusSeat from "@/components/busseat/BusSeat";
+import BusSeatWrapper from "@/components/busseat/BusSeatWrapper";
 import RouteMapWrapper from "@/components/map/RouteMapWrapper";
 import { bookingService } from "@/services/bookingService";
 import { seatService } from "@/services/seatService";
@@ -43,7 +43,8 @@ export default async function BusTicketCheckIn({
         <div className="w-full space-y-8">
           <WarningAlert message={warningMessage} />
 
-          <BusSeat
+          <BusSeatWrapper
+            schedulingId={id}
             busData={busData}
             routeData={routeData}
             seatData={seatData}
