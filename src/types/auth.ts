@@ -24,7 +24,8 @@ export interface AuthState {
 }
 
 export interface LoginCredentials {
-  email: string;
+  email?: string;
+  phone?: string;
   password: string;
 }
 
@@ -32,15 +33,19 @@ export interface RegisterData {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
   password: string;
   confirmPassword: string; // Only used for frontend validation, not sent to API
+  role?: "CUSTOMER" | "SELLER" | "ADMIN";
 }
 
 export interface RegisterApiData {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
   password: string;
+  role?: "CUSTOMER" | "SELLER" | "ADMIN";
 }
 
 export interface ForgotPasswordData {

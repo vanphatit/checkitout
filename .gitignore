@@ -43,5 +43,7 @@ yarn-error.log*
 next-env.d.ts
 source_dump.txt
 
-# docs file
-/docs
+.claude
+.github
+docs
+repomix-output.xml

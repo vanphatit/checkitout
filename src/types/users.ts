@@ -10,6 +10,7 @@ export interface UserActivity {
   createdAt: string;
   ipAddress?: string | null;
   device?: string | null;
+  location?: string | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -57,4 +58,4 @@ export interface AdminUpdateUserPayload extends UpdateProfilePayload {
   status: UserStatus;
 }
 
-export interface UsersListResponse extends UsersCollection {}
+export type UsersListResponse = UsersCollection;

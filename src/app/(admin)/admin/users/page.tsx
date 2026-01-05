@@ -18,7 +18,13 @@ import type { LucideIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { RoleGuard } from "@/components/providers/RoleGuard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -62,7 +68,9 @@ function AdminManagementContent() {
   const [users, setUsers] = useState<User[]>([]);
   const [meta, setMeta] = useState<UsersListMeta>(defaultMeta);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedActivities, setSelectedActivities] = useState<UserActivity[]>([]);
+  const [selectedActivities, setSelectedActivities] = useState<UserActivity[]>(
+    []
+  );
   const [activitiesLoading, setActivitiesLoading] = useState(false);
   const [activitiesError, setActivitiesError] = useState<string | null>(null);
 
@@ -70,7 +78,9 @@ function AdminManagementContent() {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"ALL" | User["role"]>("ALL");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | User["status"]>("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | User["status"]>(
+    "ALL"
+  );
 
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -344,8 +354,7 @@ function AdminManagementContent() {
     Math.max(1, Math.ceil(meta.total / (meta.limit || PAGE_SIZE)));
   const from = users.length ? (page - 1) * PAGE_SIZE + 1 : 0;
   const to = users.length ? from + users.length - 1 : 0;
-  const canDeleteSelected =
-    !!selectedUser && authUser?.id !== selectedUser.id;
+  const canDeleteSelected = !!selectedUser && authUser?.id !== selectedUser.id;
   const overviewCards = useMemo(
     () =>
       [
@@ -401,7 +410,10 @@ function AdminManagementContent() {
             Review, onboard, and manage every account from a single workspace.
           </p>
         </div>
-        <Button onClick={handleRefresh} disabled={isRefreshing || isLoadingUsers}>
+        <Button
+          onClick={handleRefresh}
+          disabled={isRefreshing || isLoadingUsers}
+        >
           {isRefreshing || isLoadingUsers ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
@@ -557,10 +569,14 @@ function AdminManagementContent() {
                             {item.email}
                           </div>
                         </td>
-                        <td className="px-4 py-3 capitalize">{item.role.toLowerCase()}</td>
+                        <td className="px-4 py-3 capitalize">
+                          {item.role.toLowerCase()}
+                        </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadgeStyles[item.status]}`}
+                            className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                              statusBadgeStyles[item.status]
+                            }`}
                           >
                             {item.status}
                           </span>
@@ -621,7 +637,9 @@ function AdminManagementContent() {
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <span
-                      className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadgeStyles[selectedUser.status]}`}
+                      className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                        statusBadgeStyles[selectedUser.status]
+                      }`}
                     >
                       {selectedUser.status}
                     </span>
@@ -765,7 +783,7 @@ function AdminManagementContent() {
                       <FormItem>
                         <FormLabel>Phone</FormLabel>
                         <FormControl>
-                          <Input placeholder="+84 912 345 678" {...field} />
+                          <Input placeholder="0912345678" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -897,7 +915,11 @@ function AdminManagementContent() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="jane@example.com" {...field} />
+                        <Input
+                          type="email"
+                          placeholder="jane@example.com"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -910,7 +932,7 @@ function AdminManagementContent() {
                     <FormItem>
                       <FormLabel>Phone</FormLabel>
                       <FormControl>
-                        <Input placeholder="+84 912 345 678" {...field} />
+                        <Input placeholder="0912345678" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -923,7 +945,11 @@ function AdminManagementContent() {
                     <FormItem>
                       <FormLabel>Temporary password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Provide a secure password" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="Provide a secure password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -3,9 +3,17 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  CheckCircle,
+  Phone,
+  AtSign,
+  User,
+  Info,
+} from "lucide-react";
 import Link from "next/link";
-// import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,9 +31,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 
-import { registerSchema, type RegisterFormData } from "@/lib/validations";
+import { registerSchema } from "@/lib/validations";
+import { type RegisterData } from "@/types/auth";
 import { useAppDispatch } from "@/hooks";
 import { registerUser } from "@/store/slices";
 
@@ -34,25 +44,32 @@ export function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [userEmail, setUserEmail] = useState("");
-  // const router = useRouter(); // Will be used later for navigation
+  const [isPreRegistered, setIsPreRegistered] = useState(false);
   const dispatch = useAppDispatch();
 
-  const form = useForm<RegisterFormData>({
+  const form = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
+      role: "CUSTOMER",
     },
   });
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterData) => {
     try {
       const result = await dispatch(registerUser(data));
       if (registerUser.fulfilled.match(result)) {
         setUserEmail(data.email);
+        // Check if the response indicates PRE_REGISTERED completion
+        const response = result.payload as { message?: string };
+        if (response?.message?.includes("completed")) {
+          setIsPreRegistered(true);
+        }
         setIsRegistered(true);
       }
     } catch (error) {
@@ -64,30 +81,47 @@ export function RegisterForm() {
 
   if (isRegistered) {
     return (
-      <Card className="w-full max-w-lg">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <CheckCircle className="w-6 h-6 text-green-600" />
+      <Card className="w-full max-w-lg shadow-lg border-green-100">
+        <CardHeader className="text-center space-y-4">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-100 to-green-50 rounded-full flex items-center justify-center">
+            <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <CardTitle className="text-2xl font-bold text-green-600">
-            Registration Successful!
+            {isPreRegistered
+              ? "Registration Completed!"
+              : "Registration Successful!"}
           </CardTitle>
-          <CardDescription>
-            We&apos;ve sent a verification email to {userEmail}
+          <CardDescription className="text-base">
+            {isPreRegistered
+              ? "Your account has been activated. You can now sign in."
+              : `We've sent a verification email to ${userEmail}`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Please check your email and click the verification link to activate
-            your account. Don&apos;t forget to check your spam folder!
-          </p>
+        <CardContent className="text-center space-y-6">
+          {!isPreRegistered && (
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+              <p className="text-sm text-gray-700">
+                Please check your email and click the verification link to
+                activate your account.
+              </p>
+              <p className="text-xs text-gray-600 mt-2">
+                Don&apos;t forget to check your spam folder!
+              </p>
+            </div>
+          )}
           <div className="flex flex-col space-y-3">
-            <Button asChild className="w-full">
-              <Link href="/login">Go to Sign In</Link>
+            <Button asChild className="w-full bg-primary hover:bg-primary/90">
+              <Link href="/login">
+                {isPreRegistered ? "Sign In Now" : "Go to Sign In"}
+              </Link>
             </Button>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/resend-verification">Resend Verification Email</Link>
-            </Button>
+            {!isPreRegistered && (
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/resend-verification">
+                  Resend Verification Email
+                </Link>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -95,12 +129,24 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="w-full max-w-lg">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-        <CardDescription>Enter your information to get started</CardDescription>
+    <Card className="w-full max-w-lg shadow-lg">
+      <CardHeader className="text-center space-y-2">
+        <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+          Create an account
+        </CardTitle>
+        <CardDescription className="text-base">
+          Join CheckItOut to book your bus tickets easily
+        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
+        <div className="bg-blue-50 rounded-lg p-3 border border-blue-100 flex items-start gap-2">
+          <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-gray-700">
+            If you previously booked a ticket with your phone number, enter it
+            here to complete your registration and access your bookings.
+          </p>
+        </div>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -111,11 +157,15 @@ export function RegisterForm() {
                   <FormItem>
                     <FormLabel>First Name</FormLabel>
                     <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="Enter first name"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          type="text"
+                          placeholder="John"
+                          className="pl-10"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -129,11 +179,15 @@ export function RegisterForm() {
                   <FormItem>
                     <FormLabel>Last Name</FormLabel>
                     <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="Enter last name"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          type="text"
+                          placeholder="Doe"
+                          className="pl-10"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -146,14 +200,43 @@ export function RegisterForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="Enter your email"
-                      {...field}
-                    />
+                    <div className="relative">
+                      <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="email"
+                        placeholder="name@example.com"
+                        className="pl-10"
+                        {...field}
+                      />
+                    </div>
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="tel"
+                        placeholder="0912345678"
+                        className="pl-10"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormDescription className="text-xs">
+                    Vietnamese phone number (10 digits, starts with 0)
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -169,7 +252,7 @@ export function RegisterForm() {
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Create a password"
+                        placeholder="Create a strong password"
                         {...field}
                       />
                       <Button
@@ -180,13 +263,17 @@ export function RegisterForm() {
                         onClick={() => setShowPassword((prev) => !prev)}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-4 w-4 text-gray-400" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4 text-gray-400" />
                         )}
                       </Button>
                     </div>
                   </FormControl>
+                  <FormDescription className="text-xs">
+                    Min. 8 characters with uppercase, lowercase, number &
+                    special character
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -202,7 +289,7 @@ export function RegisterForm() {
                     <div className="relative">
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm your password"
+                        placeholder="Re-enter your password"
                         {...field}
                       />
                       <Button
@@ -213,9 +300,9 @@ export function RegisterForm() {
                         onClick={() => setShowConfirmPassword((prev) => !prev)}
                       >
                         {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-4 w-4 text-gray-400" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4 text-gray-400" />
                         )}
                       </Button>
                     </div>
@@ -225,17 +312,41 @@ export function RegisterForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Account
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90 h-11"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </Button>
+
+            <p className="text-xs text-center text-gray-600">
+              By creating an account, you agree to our{" "}
+              <Link href="/terms" className="text-primary hover:underline">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className="text-primary hover:underline">
+                Privacy Policy
+              </Link>
+            </p>
           </form>
         </Form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-600">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link
+              href="/login"
+              className="font-semibold text-primary hover:text-primary/80"
+            >
               Sign in
             </Link>
           </p>
