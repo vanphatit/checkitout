@@ -23,7 +23,7 @@ export interface Bus {
   vacancy: number;
   seats: unknown[];
   driverName: string;
-  status: "AVAILABLE" | "IN_SERVICE" | "MAINTENANCE";
+  status: "AVAILABLE" | "UNAVAILABLE";
   images: string[];
   createdAt: string;
   updatedAt: string;
