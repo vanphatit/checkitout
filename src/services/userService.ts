@@ -173,4 +173,19 @@ export const userService = {
     );
     return resolveData<UserActivity[]>(response.data);
   },
+
+  async searchUserByEmailOrPhone(query: string): Promise<User | null> {
+    try {
+      const response = await api.get<MaybeApiResponse<UsersCollection | User[]>>(
+        "/users",
+        {
+          params: { search: query, limit: 1 },
+        }
+      );
+      const collection = normalizeUsersCollection(response.data);
+      return collection.items.length > 0 ? collection.items[0] : null;
+    } catch (error) {
+      return null;
+    }
+  },
 };

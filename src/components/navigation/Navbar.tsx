@@ -20,6 +20,13 @@ const navLinks = [
   { href: "/services", label: "Services" },
 ];
 
+const getTicketLink = (role?: string) => {
+  if (role === "ADMIN" || role === "SELLER") {
+    return "/admin/tickets";
+  }
+  return "/my-tickets";
+};
+
 const Navbar: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -113,6 +120,17 @@ const Navbar: React.FC = () => {
                 </Link>
               </li>
             ))}
+            {isAuthenticated && user && (
+              <li>
+                <Link
+                  href={getTicketLink(user.role)}
+                  className={`text-base font-medium ${linkClass}`}
+                  onClick={() => setOpen(false)}
+                >
+                  Ticket
+                </Link>
+              </li>
+            )}
           </ul>
 
           <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:pl-6 border-t lg:border-0 pt-3 lg:pt-0">

@@ -1,16 +1,22 @@
+"use client";
+import { useState } from "react";
 import Link from "next/link";
 import { BookingSummaryProps } from "@/types/bus";
+import { ticketService } from "@/services/ticketService";
+import { FiLoader } from "react-icons/fi";
 
 export default function BookingSummary({
   selectedSeats,
   price,
   data,
   routeData,
+  schedulingId,
   etd,
   eta,
   distance,
   estimatedDuration,
 }: BookingSummaryProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
   const routeName = routeData.name;
 
   const [from, to] = routeName.split(" - ");
@@ -24,6 +30,50 @@ export default function BookingSummary({
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
+  };
+
+  const handleCheckout = async () => {
+    if (selectedSeats.length === 0) return;
+
+    try {
+      setIsProcessing(true);
+
+      // Get selected seat IDs
+      const seatIds = selectedSeats.map((seatNo) => {
+        const seat = data.find((s) => s.seatNo === seatNo);
+        return seat?._id;
+      }).filter(Boolean) as string[];
+
+      if (seatIds.length === 0) {
+        alert("Không tìm thấy thông tin ghế. Vui lòng thử lại.");
+        return;
+      }
+
+      // For now, use first seat (or you can handle multiple seats differently)
+      const seatId = seatIds[0];
+
+      // Call createAndPay API
+      const result = await ticketService.createAndPay({
+        seatId,
+        schedulingId,
+        paymentMethod: "BANKING",
+      });
+
+      if (result.payment.success && result.payment.paymentUrl) {
+        // Redirect to VNPay
+        window.location.href = result.payment.paymentUrl;
+      } else {
+        alert("Không thể tạo link thanh toán. Vui lòng thử lại.");
+      }
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      alert(
+        error.response?.data?.message ||
+          "Có lỗi xảy ra khi tạo vé. Vui lòng thử lại."
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -121,12 +171,20 @@ export default function BookingSummary({
 
         {/* Checkout */}
         {selectedSeats.length > 0 ? (
-          <Link
-            href="/bus-tickets/checkout"
-            className="block w-full bg-primary hover:bg-primary/90 text-sm text-white py-2.5 rounded-lg text-center uppercase"
+          <button
+            onClick={handleCheckout}
+            disabled={isProcessing}
+            className="block w-full bg-primary hover:bg-primary/90 text-sm text-white py-2.5 rounded-lg text-center uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Proceed to Checkout
-          </Link>
+            {isProcessing ? (
+              <>
+                <FiLoader className="w-4 h-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Proceed to Checkout"
+            )}
+          </button>
         ) : (
           <div className="space-y-1">
             <button
