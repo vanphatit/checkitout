@@ -14,6 +14,16 @@ interface ApiResponse<T> {
 
 export const routeService = {
     /**
+     * Get all routes (paginated)
+     */
+    async getRoutes(params?: { page?: number; limit?: number }): Promise<{ items: RouteData[]; total: number }> {
+        const response = await api.get<ApiResponse<{ items: RouteData[]; total: number }>>('/routes', {
+            params
+        });
+        return response.data.data;
+    },
+
+    /**
      * Get all routes
      */
     async getAllRoutes(includeDeleted: boolean = false): Promise<RouteData[]> {
