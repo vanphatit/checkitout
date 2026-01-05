@@ -26,7 +26,7 @@ export interface Bus {
   type: "SLEEPER" | "SEAT";
   vacancy: number;
   seats: unknown[];
-  driverName: string;
+  driverName?: string; // Optional - not all buses have driver assigned yet
   status: "AVAILABLE" | "UNAVAILABLE";
   images: string[];
   createdAt: string;

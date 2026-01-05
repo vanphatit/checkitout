@@ -32,7 +32,7 @@ export function AdminShell({ children }: AdminShellProps) {
       { href: "/admin/users", label: "Người dùng", icon: Users, roles: ["ADMIN"] },
       { href: "/admin/stations", label: "Trạm xe", icon: Route, roles: ["ADMIN"] },
       { href: "/admin/routes", label: "Tuyến đường", icon: Route, roles: ["ADMIN"] },
-      { href: "/admin/schedules", label: "Chuyến xe", icon: Route, roles: ["ADMIN"] },
+      { href: "/admin/scheduling", label: "Chuyến xe", icon: Route, roles: ["ADMIN"] },
       { href: "/admin/tickets", label: "Vé", icon: Ticket, roles: ["ADMIN"] },
       { href: "/admin/buses", label: "Xe", icon: BusFront, roles: ["ADMIN"] },
       { href: "/admin/promotions", label: "Khuyến mãi", icon: BadgePercent, roles: ["ADMIN"] },
@@ -90,8 +90,8 @@ export function AdminShell({ children }: AdminShellProps) {
                     aria-label={label}
                     title={label}
                     className={`group flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${active
-                        ? "bg-white text-black shadow-sm"
-                        : "bg-white/10 text-gray-100 hover:bg-white/20"
+                      ? "bg-white text-black shadow-sm"
+                      : "bg-white/10 text-gray-100 hover:bg-white/20"
                       }`}
                   >
                     <Icon
