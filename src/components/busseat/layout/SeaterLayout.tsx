@@ -1,5 +1,5 @@
-import { LuArmchair } from "react-icons/lu";
 import { Seat } from "@/types/seat";
+import { SeatItem } from "@/components/busseat/seat/SeatItem";
 
 const chunk = (arr: Seat[], size: number) =>
   Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
@@ -21,30 +21,14 @@ export default function SeaterLayout({
     <div className="flex flex-col gap-4">
       {rows.map((row, i) => (
         <div key={i} className="flex justify-center gap-24">
-          {[...row].reverse().map((seat) => {
-            const isSold = seat.status === "SOLD";
-            const isSelected = selectedSeats.includes(seat.seatNo);
-
-            return (
-              <button
-                key={seat.seatNo}
-                disabled={isSold}
-                onClick={() => onSeatClick(seat.seatNo)}
-                className="flex flex-col items-center"
-              >
-                <LuArmchair
-                  className={`text-2xl ${
-                    isSold
-                      ? "text-neutral-400"
-                      : isSelected
-                      ? "text-red-400"
-                      : "text-primary"
-                  }`}
-                />
-                <span className="text-sm">{seat.seatNo}</span>
-              </button>
-            );
-          })}
+          {[...row].reverse().map((seat) => (
+            <SeatItem
+              key={seat.seatNo}
+              seat={seat}
+              selectedSeats={selectedSeats}
+              onSeatClick={onSeatClick}
+            />
+          ))}
         </div>
       ))}
     </div>

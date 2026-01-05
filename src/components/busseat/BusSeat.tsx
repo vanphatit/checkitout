@@ -5,6 +5,7 @@ import SeatLegend from "@/components/busseat/seat/SeatLegend";
 import SeatGrid from "@/components/busseat/seat/SeatGrid";
 import BookingSummary from "@/components/busseat/BookingSummary";
 import ErrorMessage from "@/components/alertmessage/error/ErrorMessage";
+import { useSeatWebSocketContext } from "@/components/providers/SeatWebSocketProvider";
 import { Bus, BusType } from "@/types/bus";
 import { Route } from "@/types/booking";
 import { Seat } from "@/types/seat";
@@ -33,20 +34,39 @@ const BusSeat: React.FC<BusSeatProps> = ({
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [showError, setShowError] = useState(false);
 
-  const data = seatData;
+  console.log("🎯 BusSeat component rendered");
+
+  const { lockSeat, unlockSeat, isSeatLockedByOthers, isSeatLockedByMe, isConnected, lockedSeats, updateTrigger } = useSeatWebSocketContext();
+
+  console.log("📡 WebSocket status:", { isConnected, updateTrigger, lockedCount: Object.keys(lockedSeats).length });
+
+  // Pre-compute lock status for all seats to trigger re-render
+  const data = seatData.map(seat => ({
+    ...seat,
+    isLockedByOthers: isSeatLockedByOthers(seat.seatNo),
+    isLockedByMe: isSeatLockedByMe(seat.seatNo),
+  }));
 
   const handleSeatClick = (seatId: string) => {
     const seat = data.find((s) => s.seatNo === seatId);
 
-    if (seat?.status === "SOLD") return;
+    // Can't select sold seats or seats locked by others
+    if (seat?.status === "SOLD" || isSeatLockedByOthers(seatId)) return;
 
     setSelectedSeats((prev) => {
       if (prev.includes(seatId)) {
+        // Unlock seat when deselecting
+        unlockSeat(seatId);
         return prev.filter((id) => id !== seatId);
       } else {
-        if (prev.length < 3) return [...prev, seatId];
-        setShowError(true);
-        return prev;
+        // Check max seats limit
+        if (prev.length >= 3) {
+          setShowError(true);
+          return prev;
+        }
+        // Lock seat when selecting
+        lockSeat(seatId);
+        return [...prev, seatId];
       }
     });
   };
