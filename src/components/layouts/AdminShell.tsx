@@ -90,8 +90,8 @@ export function AdminShell({ children }: AdminShellProps) {
                     aria-label={label}
                     title={label}
                     className={`group flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${active
-                        ? "bg-white text-black shadow-sm"
-                        : "bg-white/10 text-gray-100 hover:bg-white/20"
+                      ? "bg-white text-black shadow-sm"
+                      : "bg-white/10 text-gray-100 hover:bg-white/20"
                       }`}
                   >
                     <Icon

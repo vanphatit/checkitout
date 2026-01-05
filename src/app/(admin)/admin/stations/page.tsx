@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, Plus, Search } from "lucide-react";
+import { MapPin, Plus, Search, Filter, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { tokenStorage } from "@/lib/tokenStorage";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Station {
     _id: string;
@@ -28,6 +29,11 @@ export default function StationsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const debouncedSearch = useDebounce(searchQuery, 500);
+    const [statusFilter, setStatusFilter] = useState<string>("");
+    const [sortBy, setSortBy] = useState<string>("createdAt");
+    const [sortOrder, setSortOrder] = useState<string>("desc");
+    const [showFilters, setShowFilters] = useState(false);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
@@ -47,7 +53,12 @@ export default function StationsPage() {
 
     useEffect(() => {
         fetchStations();
-    }, [page, searchQuery]);
+    }, [page, debouncedSearch, statusFilter, sortBy, sortOrder]);
+
+    // Reset về trang 1 khi đổi filter
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch, statusFilter, sortBy, sortOrder]);
 
     const fetchStats = async () => {
         try {
@@ -87,11 +98,13 @@ export default function StationsPage() {
 
             // Admin xem tất cả stations (bao gồm inactive và đã xóa)
             const url = new URL(apiUrl);
-            url.searchParams.append('page', page.toString());
-            url.searchParams.append('limit', limit.toString());
+            url.searchParams.append('page', '1'); // Lấy tất cả để filter client-side
+            url.searchParams.append('limit', '1000'); // Tăng limit để lấy hết
             url.searchParams.append('includeDeleted', 'true');
-            if (searchQuery.trim()) {
-                url.searchParams.append('search', searchQuery.trim());
+            url.searchParams.append('sortBy', sortBy);
+            url.searchParams.append('sortOrder', sortOrder);
+            if (debouncedSearch.trim()) {
+                url.searchParams.append('search', debouncedSearch.trim());
             }
 
             console.log('Fetching from:', url.toString());
@@ -110,10 +123,28 @@ export default function StationsPage() {
             console.log('Data received:', data);
 
             // Backend response has nested data: { data: { data: [...], total, page, ... } }
-            const stationsData = data.data?.data || data.data || [];
-            setStations(Array.isArray(stationsData) ? stationsData : []);
-            setTotal(data.data?.total || 0);
-            setTotalPages(data.data?.totalPages || 1);
+            let allStations = data.data?.data || data.data || [];
+
+            // Client-side filtering by status
+            if (statusFilter) {
+                if (statusFilter === 'active') {
+                    allStations = allStations.filter((s: Station) => s.isActive && !s.isDeleted);
+                } else if (statusFilter === 'inactive') {
+                    allStations = allStations.filter((s: Station) => !s.isActive && !s.isDeleted);
+                } else if (statusFilter === 'deleted') {
+                    allStations = allStations.filter((s: Station) => s.isDeleted);
+                }
+            }
+
+            // Client-side pagination
+            const totalStations = allStations.length;
+            const totalPagesCalc = Math.ceil(totalStations / limit);
+            const startIdx = (page - 1) * limit;
+            const paginatedStations = allStations.slice(startIdx, startIdx + limit);
+
+            setStations(Array.isArray(paginatedStations) ? paginatedStations : []);
+            setTotal(totalStations);
+            setTotalPages(totalPagesCalc || 1);
         } catch (err) {
             console.error('Error fetching stations:', err);
             setError(err instanceof Error ? err.message : 'Failed to fetch stations');
@@ -124,7 +155,12 @@ export default function StationsPage() {
 
     const handleSearch = (value: string) => {
         setSearchQuery(value);
-        setPage(1); // Reset to first page when searching
+        setPage(1);
+    };
+
+    const handleFilterChange = (value: string) => {
+        setStatusFilter(value);
+        setPage(1);
     };
 
     const handleRestore = async (stationId: string, stationName: string) => {
@@ -175,7 +211,7 @@ export default function StationsPage() {
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
                     <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">⚠️</span>
+                        <AlertTriangle className="w-8 h-8 text-red-600" />
                     </div>
                     <p className="text-red-600 font-medium mb-2">Lỗi khi tải dữ liệu</p>
                     <p className="text-neutral-600 text-sm">{error}</p>
@@ -208,17 +244,88 @@ export default function StationsPage() {
             </div>
 
             {/* Search & Filters */}
-            <div className="bg-white rounded-xl border border-neutral-200 p-4">
-                <div className="flex items-center gap-3">
-                    <Search className="w-5 h-5 text-neutral-400" />
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm theo tên hoặc địa chỉ..."
-                        value={searchQuery}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="flex-1 outline-none text-neutral-700"
-                    />
+            <div className="bg-white rounded-xl border border-neutral-200 p-4 space-y-4">
+                <div className="flex items-center gap-4">
+                    <div className="flex-1 flex items-center gap-3">
+                        <Search className="w-5 h-5 text-neutral-400" />
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm theo tên hoặc địa chỉ..."
+                            value={searchQuery}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className="flex-1 outline-none text-neutral-700"
+                        />
+                    </div>
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition ${showFilters || statusFilter
+                            ? 'bg-blue-50 border-blue-500 text-blue-700'
+                            : 'border-neutral-300 hover:bg-neutral-50'
+                            }`}
+                    >
+                        <Filter className="w-4 h-4" />
+                        Bộ lọc
+                        {statusFilter && (
+                            <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                        )}
+                    </button>
                 </div>
+
+                {/* Filters Panel */}
+                {showFilters && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-neutral-200">
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-700 mb-2">Trạng thái</label>
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => handleFilterChange(e.target.value)}
+                                className="w-full px-3 py-1.5 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                            >
+                                <option value="">Tất cả</option>
+                                <option value="active">Đang hoạt động</option>
+                                <option value="inactive">Ngừng hoạt động</option>
+                                <option value="deleted">Đã xóa</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-700 mb-2">Sắp xếp theo</label>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="w-full px-3 py-1.5 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                            >
+                                <option value="createdAt">Ngày tạo</option>
+                                <option value="name">Tên trạm</option>
+                                <option value="updatedAt">Cập nhật gần đây</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-700 mb-2">Thứ tự</label>
+                            <select
+                                value={sortOrder}
+                                onChange={(e) => setSortOrder(e.target.value)}
+                                className="w-full px-3 py-1.5 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                            >
+                                <option value="desc">Mới nhất</option>
+                                <option value="asc">Cũ nhất</option>
+                            </select>
+                        </div>
+                        {(statusFilter || sortBy !== 'createdAt' || sortOrder !== 'desc') && (
+                            <div className="md:col-span-3">
+                                <button
+                                    onClick={() => {
+                                        handleFilterChange("");
+                                        setSortBy("createdAt");
+                                        setSortOrder("desc");
+                                    }}
+                                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                                >
+                                    Đặt lại bộ lọc
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Stats Cards */}

@@ -38,23 +38,25 @@ interface PaginatedResponse<T> {
 }
 
 export const routeService = {
-  /**
-   * Get all routes with pagination
-   */
-  async getAllRoutes(params?: {
-    page?: number;
-    limit?: number;
-    includeDeleted?: boolean;
-  }): Promise<PaginatedResponse<RouteData>> {
-    const response = await api.get<PaginatedResponse<RouteData>>("/routes", {
-      params: {
-        page: params?.page || 1,
-        limit: params?.limit || 10,
-        includeDeleted: params?.includeDeleted ? "true" : "false",
-      },
-    });
-    return response.data;
-  },
+    /**
+     * Get all routes (paginated)
+     */
+    async getRoutes(params?: { page?: number; limit?: number }): Promise<{ items: RouteData[]; total: number }> {
+        const response = await api.get<ApiResponse<{ items: RouteData[]; total: number }>>('/routes', {
+            params
+        });
+        return response.data.data;
+    },
+
+    /**
+     * Get all routes
+     */
+    async getAllRoutes(includeDeleted: boolean = false): Promise<RouteData[]> {
+        const response = await api.get<ApiResponse<RouteData[]>>('/routes', {
+            params: { includeDeleted: includeDeleted ? 'true' : 'false' }
+        });
+        return response.data.data;
+    },
 
   /**
    * Get route by ID
