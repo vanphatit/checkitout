@@ -58,7 +58,7 @@ export default function RoutePage() {
       setIsLoading(true);
       setError(null);
       try {
-        const result = await routeService.getAllRoutes({
+        const result = await routeService.getAllRoutesPaginated({
           page: pageNum,
           limit: 10,
           includeDeleted: false,
