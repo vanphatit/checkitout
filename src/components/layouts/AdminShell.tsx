@@ -30,6 +30,8 @@ export function AdminShell({ children }: AdminShellProps) {
   const navItems = useMemo(
     () => [
       { href: "/admin/users", label: "Người dùng", icon: Users, roles: ["ADMIN"] },
+      { href: "/admin/stations", label: "Trạm xe", icon: Route, roles: ["ADMIN"] },
+      { href: "/admin/routes", label: "Tuyến đường", icon: Route, roles: ["ADMIN"] },
       { href: "/admin/schedules", label: "Chuyến xe", icon: Route, roles: ["ADMIN"] },
       { href: "/admin/tickets", label: "Vé", icon: Ticket, roles: ["ADMIN"] },
       { href: "/admin/buses", label: "Xe", icon: BusFront, roles: ["ADMIN"] },
@@ -87,16 +89,14 @@ export function AdminShell({ children }: AdminShellProps) {
                     href={href}
                     aria-label={label}
                     title={label}
-                    className={`group flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
-                      active
+                    className={`group flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${active
                         ? "bg-white text-black shadow-sm"
                         : "bg-white/10 text-gray-100 hover:bg-white/20"
-                    }`}
+                      }`}
                   >
                     <Icon
-                      className={`h-4 w-4 ${
-                        active ? "text-black" : "text-gray-200"
-                      }`}
+                      className={`h-4 w-4 ${active ? "text-black" : "text-gray-200"
+                        }`}
                     />
                     <span className="sr-only md:hidden">{label}</span>
                     <span className="hidden md:inline">{label}</span>

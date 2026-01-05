@@ -1,14 +1,5 @@
 import { Bus, BusType } from "./bus";
-
-export interface Station {
-  _id: string;
-  name: string;
-  address: string;
-  location?: {
-    type: string;
-    coordinates: [number, number]; // [lng, lat]
-  };
-}
+import { Station } from "./station";
 
 export interface Route {
   _id: string;
@@ -28,12 +19,6 @@ export interface Route {
   operatingDays: string[];
   createdAt: string;
   updatedAt: string;
-}
-
-export interface Station {
-  _id: string;
-  name: string;
-  address: string;
 }
 
 export interface Driver {

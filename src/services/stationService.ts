@@ -1,16 +1,7 @@
 import api from '@/lib/axios';
+import { Station } from '@/types/station';
 
-export interface Station {
-  _id: string;
-  name: string;
-  address?: string;
-  city?: string;
-  province?: string;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
-}
+export type { Station };
 
 interface ApiResponse<T> {
   statusCode: number;
@@ -40,12 +31,17 @@ export const stationService = {
    * Get all stations (for initial load)
    */
   async getAllStations(): Promise<Station[]> {
+    console.log("stationService: Fetching all stations...");
     const response = await api.get<ApiResponse<{
       data: Station[];
       pagination: any;
     }>>('/stations', {
-      params: { limit: 100 }
+      params: { limit: 1000 } // Increase limit to get more stations
     });
-    return response.data.data.data;
+    console.log("stationService: Raw response:", response.data);
+    console.log("stationService: Stations data:", response.data.data);
+    const stations = response.data.data.data;
+    console.log("stationService: Returning stations:", stations);
+    return stations;
   }
 };
