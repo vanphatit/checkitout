@@ -13,6 +13,7 @@ export interface BookingSummaryProps {
   price: number;
   data: Seat[];
   routeData: Route;
+  schedulingId: string;
   etd?: string;
   eta?: string;
   distance?: number;

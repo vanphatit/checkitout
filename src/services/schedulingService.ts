@@ -26,6 +26,7 @@ export const schedulingService = {
         if (filters?.routeId) params.append("routeId", filters.routeId);
         if (filters?.status) params.append("status", filters.status);
         if (filters?.query) params.append("query", filters.query);
+        if (filters?.query) params.append("query", filters.query);
         if (filters?.page) params.append("page", filters.page.toString());
         if (filters?.limit) params.append("limit", filters.limit.toString());
         if (filters?.includeDeleted) params.append("includeDeleted", "true");

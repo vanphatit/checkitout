@@ -2,7 +2,7 @@ import Container from "@/components/layout/Container";
 import TopBanner from "@/components/layout/TopBanner";
 import Link from "next/link";
 import WarningAlert from "@/components/alertmessage/WarningAlert";
-import BusSeat from "@/components/busseat/BusSeat";
+import BusSeatWrapper from "@/components/busseat/BusSeatWrapper";
 import RouteMapWrapper from "@/components/map/RouteMapWrapper";
 import { bookingService } from "@/services/bookingService";
 import { seatService } from "@/services/seatService";
@@ -22,7 +22,7 @@ export default async function BusTicketCheckIn({
   const busPlate = busData.plateNo || "N/A";
   const warningMessage = (
     <>
-      One individual only can book 3 seats. If you want to book more seats.
+      One individual only can book 1 seat. If you want to book more seats.
       Please{" "}
       <Link href="/contact" className="text-yellow-700 font-medium">
         Contact our support team.
@@ -43,11 +43,13 @@ export default async function BusTicketCheckIn({
         <div className="w-full space-y-8">
           <WarningAlert message={warningMessage} />
 
-          <BusSeat
+          <BusSeatWrapper
+            schedulingId={id}
             busData={busData}
             routeData={routeData}
             seatData={seatData}
             price={price}
+            schedulingId={id}
             etd={data.etd}
             eta={data.eta}
             distance={routeData.distance}

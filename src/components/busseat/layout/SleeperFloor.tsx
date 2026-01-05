@@ -1,6 +1,6 @@
-import { LuArmchair } from "react-icons/lu";
 import { Seat } from "@/types/seat";
 import { buildSleeperGrid } from "@/utils/sleeperLayout";
+import { SeatItem } from "@/components/busseat/seat/SeatItem";
 
 export default function SleeperFloor({
   prefix,
@@ -20,30 +20,13 @@ export default function SleeperFloor({
       {grid.flat().map((seat, idx) => {
         if (!seat) return <div key={`empty-${idx}`} />;
 
-        const seatNo = seat.seatNo;
-        const isSold = seat.status === "SOLD";
-        const isSelected = selectedSeats.includes(seatNo);
-
         return (
-          <button
-            key={seatNo}
-            disabled={isSold}
-            onClick={() => {
-              onSeatClick(seatNo);
-            }}
-            className="flex flex-col items-center"
-          >
-            <LuArmchair
-              className={`text-2xl ${
-                isSold
-                  ? "text-neutral-400"
-                  : isSelected
-                  ? "text-red-400"
-                  : "text-primary"
-              }`}
-            />
-            <span className="text-sm">{seatNo}</span>
-          </button>
+          <SeatItem
+            key={seat.seatNo}
+            seat={seat}
+            selectedSeats={selectedSeats}
+            onSeatClick={onSeatClick}
+          />
         );
       })}
     </div>
