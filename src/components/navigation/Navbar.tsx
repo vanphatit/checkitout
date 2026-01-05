@@ -14,9 +14,9 @@ import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { href: "/", label: "Home" },
+  { href: "/route", label: "Tuyến đường" },
+  { href: "/scheduling", label: "Lịch trình" },
   { href: "/about", label: "About" },
-  { href: "/bus", label: "Bus" },
-  { href: "/scheduling", label: "Scheduling" },
   { href: "/services", label: "Services" },
 ];
 
