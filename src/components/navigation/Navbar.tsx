@@ -14,9 +14,9 @@ import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { href: "/", label: "Home" },
+  { href: "/route", label: "Tuyến đường" },
+  { href: "/scheduling", label: "Lịch trình" },
   { href: "/about", label: "About" },
-  { href: "/bus", label: "Bus" },
-  { href: "/scheduling", label: "Scheduling" },
   { href: "/services", label: "Services" },
 ];
 
@@ -72,10 +72,11 @@ const Navbar: React.FC = () => {
 
   return (
     <nav
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${scrolled
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
+        scrolled
           ? "bg-white/90 shadow-sm backdrop-blur dark:bg-neutral-900/80"
           : "bg-transparent"
-        }`}
+      }`}
     >
       <Container className="flex h-16 items-center justify-between gap-6">
         <Link
@@ -87,7 +88,9 @@ const Navbar: React.FC = () => {
           </span>
           <Image
             src={
-              scrolled ? "/assets/images/logo-black.png" : "/assets/images/logo-primary.png"
+              scrolled
+                ? "/assets/images/logo-black.png"
+                : "/assets/images/logo-primary.png"
             }
             alt="Logo"
             width={36}
@@ -101,12 +104,17 @@ const Navbar: React.FC = () => {
           className="flex lg:hidden items-center justify-center rounded-md p-2 text-neutral-700 hover:bg-neutral-100"
           aria-label="Toggle navigation"
         >
-          {open ? <LiaTimesSolid className="text-xl" /> : <FaBars className="text-xl" />}
+          {open ? (
+            <LiaTimesSolid className="text-xl" />
+          ) : (
+            <FaBars className="text-xl" />
+          )}
         </button>
 
         <div
-          className={`${open ? "flex" : "hidden"
-            } lg:flex absolute lg:static top-16 left-0 w-full lg:w-auto bg-white dark:bg-neutral-900 lg:bg-transparent lg:dark:bg-transparent shadow lg:shadow-none flex-col lg:flex-row gap-4 lg:items-center px-4 py-4 lg:p-0`}
+          className={`${
+            open ? "flex" : "hidden"
+          } lg:flex absolute lg:static top-16 left-0 w-full lg:w-auto bg-white dark:bg-neutral-900 lg:bg-transparent lg:dark:bg-transparent shadow lg:shadow-none flex-col lg:flex-row gap-4 lg:items-center px-4 py-4 lg:p-0`}
         >
           <ul className="flex flex-col lg:flex-row gap-4 lg:items-center">
             {navLinks.map((link) => (
@@ -143,8 +151,20 @@ const Navbar: React.FC = () => {
                     className={`justify-center gap-2 rounded-full border ${roleStyle.border} ${roleStyle.bg} ${roleStyle.text} ${roleStyle.hover}`}
                     onClick={() => setOpen(false)}
                   >
-                    <Link href="/profile">
-                      <CircleUserRound className="h-4 w-4" />
+                    <Link href="/profile" className="flex items-center gap-2">
+                      {user.avatarUrl ? (
+                        <div className="relative h-6 w-6 overflow-hidden rounded-full border-2 border-current">
+                          <Image
+                            src={user.avatarUrl}
+                            alt={`${user.firstName} ${user.lastName}`}
+                            fill
+                            className="object-cover"
+                            sizes="24px"
+                          />
+                        </div>
+                      ) : (
+                        <CircleUserRound className="h-4 w-4" />
+                      )}
                       <span className="font-semibold">
                         {user.firstName} {user.lastName}
                       </span>

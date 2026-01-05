@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -36,8 +36,9 @@ import {
 
 import { registerSchema } from "@/lib/validations";
 import { type RegisterData } from "@/types/auth";
-import { useAppDispatch } from "@/hooks";
-import { registerUser } from "@/store/slices";
+import { useAppDispatch, useAppSelector } from "@/hooks";
+import { registerUser, clearError } from "@/store/slices";
+import { useToast } from "@/hooks/use-toast";
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -46,6 +47,20 @@ export function RegisterForm() {
   const [userEmail, setUserEmail] = useState("");
   const [isPreRegistered, setIsPreRegistered] = useState(false);
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
+  const { error } = useAppSelector((state) => state.auth);
+
+  // Show toast when error changes
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
+        description: error,
+      });
+      dispatch(clearError());
+    }
+  }, [error, toast, dispatch]);
 
   const form = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),

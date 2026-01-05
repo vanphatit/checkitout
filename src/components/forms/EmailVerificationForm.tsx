@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { useAppDispatch } from "@/hooks";
 import { verifyEmail } from "@/store/slices";
+import { useToast } from "@/hooks/use-toast";
 
 export function EmailVerificationForm() {
   const [status, setStatus] = useState<
@@ -24,6 +25,7 @@ export function EmailVerificationForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -40,12 +42,24 @@ export function EmailVerificationForm() {
           setStatus("success");
           setMessage(result.payload.message);
         } else {
+          const errorMsg = (result.payload as string) || "Verification failed";
           setStatus("error");
-          setMessage((result.payload as string) || "Verification failed");
+          setMessage(errorMsg);
+          toast({
+            variant: "destructive",
+            title: "Verification Failed",
+            description: errorMsg,
+          });
         }
       } catch {
+        const errorMsg = "An unexpected error occurred";
         setStatus("error");
-        setMessage("An unexpected error occurred");
+        setMessage(errorMsg);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: errorMsg,
+        });
       }
     };
 

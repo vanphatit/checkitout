@@ -30,9 +30,9 @@ export function AdminShell({ children }: AdminShellProps) {
   const navItems = useMemo(
     () => [
       { href: "/admin/users", label: "Người dùng", icon: Users, roles: ["ADMIN"] },
-      { href: "/admin/stations", label: "Trạm xe", icon: Route, roles: ["ADMIN"] },
-      { href: "/admin/routes", label: "Tuyến đường", icon: Route, roles: ["ADMIN"] },
-      { href: "/admin/scheduling", label: "Chuyến xe", icon: Route, roles: ["ADMIN"] },
+      { href: "/admin/stations", label: "Trạm", icon: Route, roles: ["ADMIN"] },
+      { href: "/admin/routes", label: "Tuyến", icon: Route, roles: ["ADMIN"] },
+      { href: "/admin/schedules", label: "Chuyến", icon: Route, roles: ["ADMIN"] },
       { href: "/admin/tickets", label: "Vé", icon: Ticket, roles: ["ADMIN"] },
       { href: "/admin/buses", label: "Xe", icon: BusFront, roles: ["ADMIN"] },
       { href: "/admin/promotions", label: "Khuyến mãi", icon: BadgePercent, roles: ["ADMIN"] },
@@ -120,7 +120,6 @@ export function AdminShell({ children }: AdminShellProps) {
                 onClick={logout}
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                Logout
               </Button>
             </div>
           </div>
