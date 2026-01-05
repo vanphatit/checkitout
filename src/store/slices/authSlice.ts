@@ -61,10 +61,10 @@ export const loginUser = createAsyncThunk(
 
       return resolvedUser;
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message);
-      }
-      return rejectWithValue("Login failed");
+      const errorMessage =
+        (error as any)?.response?.data?.message ||
+        (error instanceof Error ? error.message : "Login failed");
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -89,10 +89,10 @@ export const registerUser = createAsyncThunk(
 
       return user;
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message);
-      }
-      return rejectWithValue("Registration failed");
+      const errorMessage =
+        (error as any)?.response?.data?.message ||
+        (error instanceof Error ? error.message : "Registration failed");
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -104,10 +104,12 @@ export const forgotPassword = createAsyncThunk(
       await api.post("/auth/forgot-password", data);
       return "Password reset email sent";
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message);
-      }
-      return rejectWithValue("Failed to send reset email");
+      const errorMessage =
+        (error as any)?.response?.data?.message ||
+        (error instanceof Error
+          ? error.message
+          : "Failed to send password reset email");
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -122,10 +124,10 @@ export const verifyEmail = createAsyncThunk(
       );
       return { message: response.data.message, user: response.data.user };
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        return rejectWithValue(error.message);
-      }
-      return rejectWithValue("Email verification failed");
+      const errorMessage =
+        (error as any)?.response?.data?.message ||
+        (error instanceof Error ? error.message : "Email verification failed");
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -207,6 +209,21 @@ export const checkAuth = createAsyncThunk(
     } catch (e) {
       tokenStorage.clearAccessToken();
       return thunkAPI.rejectWithValue("Session invalid");
+    }
+  }
+);
+
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      await api.post("/auth/logout");
+      tokenStorage.clearAccessToken();
+      return true;
+    } catch (error: unknown) {
+      // Even if backend fails, clear local tokens
+      tokenStorage.clearAccessToken();
+      return true;
     }
   }
 );
@@ -293,7 +310,6 @@ const authSlice = createSlice({
         state.isInitialized = true;
         state.user = action.payload as User;
         state.isAuthenticated = true;
-        state.error = null;
       })
       .addCase(checkAuth.rejected, (state, action) => {
         state.isCheckingAuth = false;
@@ -301,6 +317,14 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
         state.error = (action.payload as string) ?? null;
+      })
+      // Logout
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
+        state.error = null;
+        state.isCheckingAuth = false;
+        state.isInitialized = true;
       });
   },
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, ArrowLeft, Mail, CheckCircle2, AtSign } from "lucide-react";
@@ -28,13 +29,28 @@ import {
   forgotPasswordSchema,
   type ForgotPasswordFormData,
 } from "@/lib/validations";
-import { useAppDispatch } from "@/hooks";
-import { forgotPassword } from "@/store/slices";
+import { useAppDispatch, useAppSelector } from "@/hooks";
+import { forgotPassword, clearError } from "@/store/slices";
+import { useToast } from "@/hooks/use-toast";
 
 export function ForgotPasswordForm() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
+  const { error } = useAppSelector((state) => state.auth);
+
+  // Show toast when error changes
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Failed",
+        description: error,
+      });
+      dispatch(clearError());
+    }
+  }, [error, toast, dispatch]);
 
   const form = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),

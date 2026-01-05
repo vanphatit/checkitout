@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2, Mail, Phone, AtSign } from "lucide-react";
@@ -27,8 +27,9 @@ import {
 } from "@/components/ui/form";
 
 import { loginSchema, type LoginFormData } from "@/lib/validations";
-import { useAppDispatch } from "@/hooks";
-import { loginUser } from "@/store/slices";
+import { useAppDispatch, useAppSelector } from "@/hooks";
+import { loginUser, clearError } from "@/store/slices";
+import { useToast } from "@/hooks/use-toast";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,6 +38,20 @@ export function LoginForm() {
   const [userIdentifier, setUserIdentifier] = useState("");
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
+  const { error } = useAppSelector((state) => state.auth);
+
+  // Show toast when error changes
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: error,
+      });
+      dispatch(clearError());
+    }
+  }, [error, toast, dispatch]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
