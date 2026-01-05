@@ -1,12 +1,7 @@
 import api from '@/lib/axios';
+import { RouteData, CreateRouteDto, UpdateRouteDto, SuggestStationsResponse } from '@/types/route';
 
-export interface RouteData {
-    _id: string;
-    name: string;
-    distance?: number;
-    estimatedDuration?: number;
-    basePrice?: number;
-}
+export type { RouteData, CreateRouteDto, UpdateRouteDto, SuggestStationsResponse };
 
 interface ApiResponse<T> {
     statusCode: number;
@@ -21,8 +16,10 @@ export const routeService = {
     /**
      * Get all routes
      */
-    async getAllRoutes(): Promise<RouteData[]> {
-        const response = await api.get<ApiResponse<RouteData[]>>('/routes');
+    async getAllRoutes(includeDeleted: boolean = false): Promise<RouteData[]> {
+        const response = await api.get<ApiResponse<RouteData[]>>('/routes', {
+            params: { includeDeleted: includeDeleted ? 'true' : 'false' }
+        });
         return response.data.data;
     },
 
@@ -31,6 +28,47 @@ export const routeService = {
      */
     async getRouteById(id: string): Promise<RouteData> {
         const response = await api.get<ApiResponse<RouteData>>(`/routes/${id}`);
+        return response.data.data;
+    },
+
+    /**
+     * Create new route
+     */
+    async createRoute(data: CreateRouteDto): Promise<RouteData> {
+        const response = await api.post<ApiResponse<RouteData>>('/routes', data);
+        return response.data.data;
+    },
+
+    /**
+     * Update existing route
+     */
+    async updateRoute(id: string, data: UpdateRouteDto): Promise<RouteData> {
+        const response = await api.patch<ApiResponse<RouteData>>(`/routes/${id}`, data);
+        return response.data.data;
+    },
+
+    /**
+     * Delete route (soft delete)
+     */
+    async deleteRoute(id: string): Promise<void> {
+        await api.delete(`/routes/${id}`);
+    },
+
+    /**
+     * Suggest intermediate stations between origin and destination
+     */
+    async suggestStations(originId: string, destinationId: string): Promise<SuggestStationsResponse> {
+        const response = await api.get<ApiResponse<SuggestStationsResponse>>('/routes/suggest-stations', {
+            params: { originId, destinationId }
+        });
+        return response.data.data;
+    },
+
+    /**
+     * Recalculate route distance
+     */
+    async recalculateDistance(id: string): Promise<RouteData> {
+        const response = await api.post<ApiResponse<RouteData>>(`/routes/${id}/recalculate-distance`);
         return response.data.data;
     }
 };
