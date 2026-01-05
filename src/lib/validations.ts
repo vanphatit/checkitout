@@ -1,17 +1,22 @@
 import { z } from "zod";
 
-const phoneRegex = /^[0-9+()\s-]+$/;
+// Vietnamese phone format regex (e.g., 0912345678 - 10 digits starting with 0)
+const phoneRegex = /^0\d{9}$/;
 
-export const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .min(6, "Password must be at least 6 characters"),
-});
+// Login with either email or phone
+export const loginSchema = z
+  .object({
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    password: z
+      .string()
+      .min(1, "Password is required")
+      .min(6, "Password must be at least 6 characters"),
+  })
+  .refine((data) => data.email || data.phone, {
+    message: "Please provide either email or phone number",
+    path: ["email"],
+  });
 
 export const registerSchema = z
   .object({
@@ -29,6 +34,13 @@ export const registerSchema = z
       .string()
       .min(1, "Email is required")
       .email("Please enter a valid email address"),
+    phone: z
+      .string()
+      .min(1, "Phone number is required")
+      .regex(
+        phoneRegex,
+        "Please enter a valid Vietnamese phone number (e.g., 0912345678)"
+      ),
     password: z
       .string()
       .min(1, "Password is required")
@@ -38,6 +50,7 @@ export const registerSchema = z
         "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
       ),
     confirmPassword: z.string().min(1, "Please confirm your password"),
+    role: z.enum(["CUSTOMER", "SELLER", "ADMIN"]).default("CUSTOMER"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -81,7 +94,8 @@ export const resendVerificationSchema = z.object({
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
-export type RegisterFormData = z.infer<typeof registerSchema>;
+// Don't infer RegisterFormData to preserve required role field
+// export type RegisterFormData = z.infer<typeof registerSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type VerifyEmailFormData = z.infer<typeof verifyEmailSchema>;
@@ -129,9 +143,7 @@ export const changePasswordSchema = z
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
         "Password must contain uppercase, lowercase, number, and symbol"
       ),
-    confirmNewPassword: z
-      .string()
-      .min(1, "Please confirm your new password"),
+    confirmNewPassword: z.string().min(1, "Please confirm your new password"),
   })
   .refine((data) => data.newPassword === data.confirmNewPassword, {
     message: "Passwords do not match",
@@ -166,12 +178,8 @@ const adminUserSchema = z.object({
     .refine((value) => !value || phoneRegex.test(value), {
       message: "Phone number can contain only numbers and + ( ) - symbols",
     }),
-  role: z.enum(["CUSTOMER", "SELLER", "ADMIN"], {
-    required_error: "Role is required",
-  }),
-  status: z.enum(["ACTIVE", "PENDING", "INACTIVE"], {
-    required_error: "Status is required",
-  }),
+  role: z.enum(["CUSTOMER", "SELLER", "ADMIN"]),
+  status: z.enum(["ACTIVE", "PENDING", "INACTIVE"]),
 });
 
 export const adminCreateUserSchema = adminUserSchema.extend({

@@ -27,7 +27,13 @@ import {
   changePasswordSchema,
   type ChangePasswordFormData,
 } from "@/lib/validations";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -162,7 +168,9 @@ export default function ProfilePage() {
       profile.email,
       profile.phone,
     ];
-    const filled = fieldsToCheck.filter((value) => value && value !== "").length;
+    const filled = fieldsToCheck.filter(
+      (value) => value && value !== ""
+    ).length;
     return Math.round((filled / fieldsToCheck.length) * 100);
   }, [profile]);
 
@@ -310,7 +318,11 @@ export default function ProfilePage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <FormLabel>Email</FormLabel>
-                    <Input className="mt-2" value={profile?.email ?? ""} disabled />
+                    <Input
+                      className="mt-2"
+                      value={profile?.email ?? ""}
+                      disabled
+                    />
                   </div>
                   <FormField
                     control={form.control}
@@ -319,7 +331,7 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel>Phone</FormLabel>
                         <FormControl>
-                          <Input placeholder="+84 912 345 678" {...field} />
+                          <Input placeholder="0912345678" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -488,7 +500,9 @@ export default function ProfilePage() {
                     <div className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${tone}`}>
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${tone}`}
+                          >
                             {actionLabel}
                           </span>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">

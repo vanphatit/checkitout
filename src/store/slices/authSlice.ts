@@ -159,9 +159,7 @@ export const checkAuth = createAsyncThunk(
     let workingToken = tokenStorage.getAccessToken();
 
     const attemptRefresh = async () => {
-      const refreshRes = await api.post(
-        "/auth/refresh-token"
-      );
+      const refreshRes = await api.post("/auth/refresh-token");
       const { accessToken, user } = extractResponseData(refreshRes.data);
       if (!accessToken) {
         throw new Error("Token expired");
@@ -187,9 +185,12 @@ export const checkAuth = createAsyncThunk(
     }
 
     try {
-      const res = await api.get<ApiResponse<User> | { user?: User } | User>("/auth/me");
+      const res = await api.get<ApiResponse<User> | { user?: User } | User>(
+        "/auth/me"
+      );
       const rawPayload = extractResponseData(res.data);
-      const user = (rawPayload as { user?: User }).user ?? (rawPayload as User | null);
+      const user =
+        (rawPayload as { user?: User }).user ?? (rawPayload as User | null);
 
       if (user && !user.role) {
         const tokenRole = getRoleFromToken(workingToken);
@@ -229,7 +230,7 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = true;
     },
-    setUserRole(state, action: PayloadAction<string>) {
+    setUserRole(state, action: PayloadAction<User["role"]>) {
       if (state.user) {
         state.user.role = action.payload;
       }
