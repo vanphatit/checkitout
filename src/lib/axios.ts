@@ -35,17 +35,31 @@ api.interceptors.response.use(
       | (AxiosRequestConfig & { _retry?: boolean })
       | undefined;
 
-    if (
-      originalRequest?.url?.includes("/auth/refresh-token")
-    ) {
+    // Don't attempt refresh if the failed request was to refresh endpoint itself
+    if (originalRequest?.url?.includes("/auth/refresh-token")) {
       tokenStorage.clearAccessToken();
       return Promise.reject(error);
     }
 
+    // Don't attempt refresh for auth endpoints (login, register, etc.)
+    // These endpoints are expected to fail with 401 if credentials are invalid
+    const authEndpoints = [
+      "/auth/login",
+      "/auth/register",
+      "/auth/forgot-password",
+      "/auth/verify-email",
+      "/auth/resend-verification",
+    ];
+
+    const isAuthEndpoint = authEndpoints.some((endpoint) =>
+      originalRequest?.url?.includes(endpoint)
+    );
+
     if (
       error.response?.status === 401 &&
       originalRequest &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !isAuthEndpoint // Don't refresh for auth endpoints
     ) {
       originalRequest._retry = true;
 
@@ -53,9 +67,12 @@ api.interceptors.response.use(
         const response = await api.post<{ accessToken: string }>(
           "/auth/refresh-token"
         );
-        const payload = (response.data as { accessToken?: string } & {
-          data?: { accessToken?: string };
-        }).data ?? response.data;
+        const payload =
+          (
+            response.data as { accessToken?: string } & {
+              data?: { accessToken?: string };
+            }
+          ).data ?? response.data;
         const { accessToken } = payload as { accessToken?: string };
         if (!accessToken) {
           tokenStorage.clearAccessToken();
@@ -68,7 +85,8 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         tokenStorage.clearAccessToken();
-        if (typeof window !== "undefined") {
+        // Only redirect to login if we're not already on an auth page
+        if (typeof window !== "undefined" && !isAuthEndpoint) {
           window.location.href = "/login";
         }
         return Promise.reject(refreshError);

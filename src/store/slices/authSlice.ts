@@ -228,6 +228,37 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+// Google OAuth Login (direct action, not async thunk since auth is handled by backend)
+export const googleOAuthLogin = createAsyncThunk(
+  "auth/googleOAuthLogin",
+  async (
+    { user, accessToken }: { user: User; accessToken: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      // Store access token
+      if (accessToken) {
+        tokenStorage.setAccessToken(accessToken);
+      }
+
+      // Ensure user has role
+      let resolvedUser = user;
+      if (resolvedUser && !resolvedUser.role) {
+        const tokenRole = getRoleFromToken(accessToken);
+        if (tokenRole) {
+          resolvedUser = { ...resolvedUser, role: tokenRole as User["role"] };
+        }
+      }
+
+      return resolvedUser;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "OAuth login failed";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -325,6 +356,22 @@ const authSlice = createSlice({
         state.error = null;
         state.isCheckingAuth = false;
         state.isInitialized = true;
+      })
+      // Google OAuth Login
+      .addCase(googleOAuthLogin.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(googleOAuthLogin.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        state.isInitialized = true;
+        state.error = null;
+      })
+      .addCase(googleOAuthLogin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
   },
 });

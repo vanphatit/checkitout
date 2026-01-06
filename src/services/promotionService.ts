@@ -98,4 +98,14 @@ export const promotionService = {
     );
     return response.data.data;
   },
+
+  /**
+   * Get promotion by code
+   */
+  async getPromotionByCode(code: string): Promise<Promotion> {
+    const response = await api.get<ApiResponse<Promotion>>(
+      `/promotion/code/${code}`
+    );
+    return response.data.data;
+  },
 };

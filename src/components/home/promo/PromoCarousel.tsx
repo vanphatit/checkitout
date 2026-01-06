@@ -193,7 +193,7 @@ const PromoCarousel: React.FC = () => {
               >
                 <PromotionCard
                   title={promo.name}
-                  code={`PROMO${promo.value}`}
+                  code={promo.code}
                   description={
                     promo.description || `Giảm ${promo.value}% vé bus`
                   }

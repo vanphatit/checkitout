@@ -4,6 +4,7 @@ export interface Promotion {
   type: "Default" | "Recurring" | "Special";
   startDate: string;
   expiryDate: string;
+  code: string;
   value: number;
   recurringMonth?: number;
   recurringDay?: number;
