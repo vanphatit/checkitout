@@ -6,6 +6,7 @@ import { ticketService } from "@/services/ticketService";
 import { promotionService } from "@/services/promotionService";
 import { Promotion } from "@/types/promotion";
 import { FiLoader, FiTag } from "react-icons/fi";
+import { ar } from "zod/locales";
 
 export default function BookingSummary({
   selectedSeats,
@@ -17,6 +18,8 @@ export default function BookingSummary({
   eta,
   distance,
   estimatedDuration,
+  arrivalDate,
+  departureDate,
 }: BookingSummaryProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [promotionCode, setPromotionCode] = useState("");
@@ -178,21 +181,24 @@ export default function BookingSummary({
             Đến <span className="font-medium text-neutral-600">{to}</span>
           </p>
 
-          {etd && eta && (
-            <div className="flex items-center gap-2">
+          {arrivalDate && departureDate && etd && eta && (
+            <div className="flex items-center gap-2 py-2">
               <h1 className="text-sm text-neutral-600">
-                Bắt đầu <span className="font-medium">({etd})</span>
+                <span className="font-medium">
+                  {new Date(departureDate).toLocaleDateString("vi-VN")} ({etd})
+                </span>
               </h1>
               <div className="flex-1 border-dashed border border-neutral-300" />
               <h1 className="text-sm text-neutral-600">
-                Kết thúc <span className="font-medium">({eta})</span>
+                <span className="font-medium">
+                  {new Date(arrivalDate).toLocaleDateString("vi-VN")} ({eta})
+                </span>
               </h1>
             </div>
           )}
 
           {distance && (
             <p className="text-sm text-neutral-500">
-              Khoảng cách:{" "}
               <span className="font-medium text-neutral-600">{distance}km</span>
             </p>
           )}
@@ -208,7 +214,7 @@ export default function BookingSummary({
         </div>
 
         {/* Selected seats */}
-        <div className="space-y-3">
+        <div className="space-y-3 py-2">
           <h1 className="text-lg text-neutral-600 font-medium">
             Chỗ ngồi được chọn
           </h1>

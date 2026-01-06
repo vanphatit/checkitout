@@ -69,6 +69,7 @@ export function LoginForm() {
     try {
       const result = await dispatch(loginUser(data));
       if (loginUser.fulfilled.match(result)) {
+
         router.push("/");
       } else if (loginUser.rejected.match(result)) {
         const error = result.payload as string;
@@ -150,11 +151,10 @@ export function LoginForm() {
               setLoginMethod("email");
               form.setValue("phone", "");
             }}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-              loginMethod === "email"
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${loginMethod === "email"
                 ? "bg-white text-primary shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
-            }`}
+              }`}
           >
             <AtSign className="inline-block w-4 h-4 mr-2" />
             Email
@@ -165,11 +165,10 @@ export function LoginForm() {
               setLoginMethod("phone");
               form.setValue("email", "");
             }}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-              loginMethod === "phone"
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${loginMethod === "phone"
                 ? "bg-white text-primary shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
-            }`}
+              }`}
           >
             <Phone className="inline-block w-4 h-4 mr-2" />
             Phone

@@ -17,6 +17,8 @@ interface BusSeatClientProps {
   eta?: string;
   distance?: number;
   estimatedDuration?: number;
+  arrivalDate?: string;
+  departureDate?: string;
 }
 
 export default function BusSeatClient({
@@ -29,6 +31,8 @@ export default function BusSeatClient({
   eta,
   distance,
   estimatedDuration,
+  arrivalDate,
+  departureDate,
 }: BusSeatClientProps) {
   return (
     <SeatWebSocketProvider schedulingId={schedulingId}>
@@ -42,6 +46,8 @@ export default function BusSeatClient({
         eta={eta}
         distance={distance}
         estimatedDuration={estimatedDuration}
+        arrivalDate={arrivalDate}
+        departureDate={departureDate}
       />
     </SeatWebSocketProvider>
   );

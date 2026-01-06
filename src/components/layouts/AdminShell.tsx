@@ -11,6 +11,7 @@ import {
   Route,
   Ticket,
   Users,
+  LayoutDashboard,
 } from "lucide-react";
 
 import { RoleGuard } from "@/components/providers/RoleGuard";
@@ -30,6 +31,11 @@ export function AdminShell({ children }: AdminShellProps) {
 
   const navItems = useMemo(
     () => [
+      {
+        href: "/admin/dashboard",
+        icon: LayoutDashboard,
+        roles: ["ADMIN"],
+      },
       {
         href: "/admin/users",
         label: "Người dùng",
@@ -106,16 +112,14 @@ export function AdminShell({ children }: AdminShellProps) {
                     href={href}
                     aria-label={label}
                     title={label}
-                    className={`group flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
-                      active
-                        ? "bg-white text-black shadow-sm"
-                        : "bg-white/10 text-gray-100 hover:bg-white/20"
-                    }`}
+                    className={`group flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${active
+                      ? "bg-white text-black shadow-sm"
+                      : "bg-white/10 text-gray-100 hover:bg-white/20"
+                      }`}
                   >
                     <Icon
-                      className={`h-4 w-4 ${
-                        active ? "text-black" : "text-gray-200"
-                      }`}
+                      className={`h-4 w-4 ${active ? "text-black" : "text-gray-200"
+                        }`}
                     />
                     <span className="sr-only md:hidden">{label}</span>
                     <span className="hidden md:inline">{label}</span>

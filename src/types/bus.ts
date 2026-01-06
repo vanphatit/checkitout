@@ -18,6 +18,8 @@ export interface BookingSummaryProps {
   eta?: string;
   distance?: number;
   estimatedDuration?: number;
+  arrivalDate?: string;
+  departureDate?: string;
 }
 
 export interface Bus {
