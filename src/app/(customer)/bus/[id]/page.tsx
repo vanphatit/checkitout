@@ -51,7 +51,6 @@ export default async function BusTicketCheckIn({
             routeData={routeData}
             seatData={seatData}
             price={price}
-            schedulingId={id}
             etd={data.etd}
             eta={data.eta}
             distance={routeData.distance}
@@ -68,14 +67,14 @@ export default async function BusTicketCheckIn({
             {routeData.stationIds.some(
               (station: any) => station.isActive === false
             ) && (
-              <div className="w-full bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <p className="text-sm text-orange-700">
-                  ⚠️ <strong>Lưu ý:</strong> Một số trạm trên tuyến đường này
-                  hiện đang tạm ngừng hoạt động. Vui lòng liên hệ nhà xe để biết
-                  thêm chi tiết.
-                </p>
-              </div>
-            )}
+                <div className="w-full bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <p className="text-sm text-orange-700">
+                    ⚠️ <strong>Lưu ý:</strong> Một số trạm trên tuyến đường này
+                    hiện đang tạm ngừng hoạt động. Vui lòng liên hệ nhà xe để biết
+                    thêm chi tiết.
+                  </p>
+                </div>
+              )}
 
             {/* Interactive Map */}
             <div className="w-full bg-neutral-50 rounded-xl p-6 border border-neutral-200">
@@ -94,21 +93,19 @@ export default async function BusTicketCheckIn({
                 {routeData.stationIds.map((station, index) => (
                   <div
                     key={station._id}
-                    className={`flex items-start gap-3 break-inside-avoid mb-2 ${
-                      station.isActive === false ? "opacity-50" : ""
-                    }`}
+                    className={`flex items-start gap-3 break-inside-avoid mb-2 ${station.isActive === false ? "opacity-50" : ""
+                      }`}
                   >
                     <div className="flex flex-col items-center flex-shrink-0">
                       <div
-                        className={`w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-semibold ${
-                          station.isActive === false
+                        className={`w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-semibold ${station.isActive === false
                             ? "bg-neutral-400"
                             : index === 0
-                            ? "bg-green-500"
-                            : index === routeData.stationIds.length - 1
-                            ? "bg-red-500"
-                            : "bg-blue-500"
-                        }`}
+                              ? "bg-green-500"
+                              : index === routeData.stationIds.length - 1
+                                ? "bg-red-500"
+                                : "bg-blue-500"
+                          }`}
                       >
                         {index + 1}
                       </div>

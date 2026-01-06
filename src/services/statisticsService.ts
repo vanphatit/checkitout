@@ -1,6 +1,5 @@
 import axios from '@/lib/axios';
-import { ApiResponse } from '@/types/common';
-
+import { ApiResponse } from '@/types/auth';
 export interface OverviewStats {
     todayRevenue: number;
     todayTickets: number;
@@ -82,7 +81,7 @@ export interface SchedulingDetailToday {
     }>;
 }
 
-const resolveData = <T>(response: ApiResponse<T>): T => response.data;
+const resolveData = <T>(response: ApiResponse<T>): T => response.data as T;
 
 export const statisticsService = {
     /**

@@ -2,8 +2,9 @@
 import { useSearchParams } from "next/navigation";
 import { FiAlertTriangle, FiArrowRight } from "react-icons/fi";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default function PaymentErrorPage() {
+function PaymentErrorContent() {
   const searchParams = useSearchParams();
   const message =
     searchParams.get("message") || "Có lỗi xảy ra trong quá trình xử lý";
@@ -67,5 +68,17 @@ export default function PaymentErrorPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentErrorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+      </div>
+    }>
+      <PaymentErrorContent />
+    </Suspense>
   );
 }

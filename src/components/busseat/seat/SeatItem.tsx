@@ -25,24 +25,23 @@ export function SeatItem({
         isSold || isPending
           ? "Sold"
           : isLockedByOthers
-          ? "Locked by another user"
-          : isLockedByMe
-          ? "Locked by you"
-          : "Available"
+            ? "Locked by another user"
+            : isLockedByMe
+              ? "Locked by you"
+              : "Available"
       }
     >
       <LuArmchair
-        className={`text-2xl transition-colors ${
-          isSold
+        className={`text-2xl transition-colors ${isSold || isPending
             ? "text-neutral-400"
             : isLockedByOthers
-            ? "!text-orange-400 !opacity-60"
-            : isSelected
-            ? "!text-orange-500"
-            : isLockedByMe
-            ? "!text-red-500"
-            : "text-primary"
-        }`}
+              ? "!text-orange-400 !opacity-60"
+              : isSelected
+                ? "!text-orange-500"
+                : isLockedByMe
+                  ? "!text-red-500"
+                  : "text-primary"
+          }`}
       />
       <span className="text-xs">{seat.seatNo}</span>
       {isLockedByOthers && (

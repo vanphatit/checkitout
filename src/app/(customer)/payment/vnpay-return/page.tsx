@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import { ApiResponse } from "@/types/auth";
@@ -13,7 +13,7 @@ import {
 } from "react-icons/fi";
 import Link from "next/link";
 
-export default function VNPayReturnPage() {
+function VNPayReturnContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -118,11 +118,10 @@ export default function VNPayReturnPage() {
         <div className="bg-white border border-slate-200 rounded-3xl shadow-lg overflow-hidden">
           {/* Header */}
           <div
-            className={`p-8 text-center ${
-              success
+            className={`p-8 text-center ${success
                 ? "bg-gradient-to-br from-emerald-500 to-emerald-600"
                 : "bg-gradient-to-br from-rose-500 to-rose-600"
-            }`}
+              }`}
           >
             <div className="flex justify-center mb-4">
               {success ? (
@@ -194,8 +193,8 @@ export default function VNPayReturnPage() {
                       <span className="font-bold text-slate-900">
                         {scheduling
                           ? new Date(
-                              scheduling.departureDate
-                            ).toLocaleDateString("vi-VN")
+                            scheduling.departureDate
+                          ).toLocaleDateString("vi-VN")
                           : "N/A"}
                       </span>
                     </div>
@@ -347,5 +346,17 @@ export default function VNPayReturnPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VNPayReturnPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+        <FiLoader className="w-12 h-12 animate-spin text-blue-600" />
+      </div>
+    }>
+      <VNPayReturnContent />
+    </Suspense>
   );
 }

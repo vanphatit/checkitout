@@ -133,7 +133,8 @@ export default function AdminDashboardPage() {
     const ticketStatusData = Object.entries(ticketStatus).map(([name, value]) => ({
         name,
         value
-    }));
+    }))
+        .filter(item => item.value > 0);
 
     const SCHEDULING_STATUS_NORMALIZE: Record<string, string> = {
         'scheduled': 'SCHEDULED',
@@ -143,12 +144,12 @@ export default function AdminDashboardPage() {
         'cancelled': 'CANCELLED',
     };
 
-    const schedulingStatusData = Object.entries(schedulingStatus).map(
-        ([name, value]) => ({
+    const schedulingStatusData = Object.entries(schedulingStatus)
+        .map(([name, value]) => ({
             name: SCHEDULING_STATUS_NORMALIZE[name] ?? name.toUpperCase(),
             value,
-        })
-    );
+        }))
+        .filter(item => item.value > 0);
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('vi-VN', {
@@ -441,23 +442,29 @@ export default function AdminDashboardPage() {
                             <CardDescription>Xu hướng lấp đầy ghế 7 ngày qua</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <AreaChart data={occupancyTrend}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="date" />
-                                    <YAxis tickFormatter={(value) => `${value}%`} />
-                                    <Tooltip formatter={(value) => `${Number(value || 0).toFixed(2)}%`} />
-                                    <Legend />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="occupancy"
-                                        stroke={COLORS.info}
-                                        fill={COLORS.info}
-                                        fillOpacity={0.6}
-                                        name="Tỷ lệ lấp đầy"
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                            {occupancyTrend.length === 0 ? (
+                                <div className="h-[300px] flex items-center justify-center text-neutral-500">
+                                    Chưa có dữ liệu lấp đầy ghế
+                                </div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <AreaChart data={occupancyTrend}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="date" />
+                                        <YAxis tickFormatter={(value) => `${value}%`} />
+                                        <Tooltip formatter={(value) => `${Number(value || 0).toFixed(2)}%`} />
+                                        <Legend />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="occupancy"
+                                            stroke={COLORS.info}
+                                            fill={COLORS.info}
+                                            fillOpacity={0.6}
+                                            name="Tỷ lệ lấp đầy"
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -474,36 +481,6 @@ export default function AdminDashboardPage() {
                                 <p className="text-2xl font-bold">
                                     {schedulingSummary?.total || 0}
                                 </p>
-                                <div className="space-y-1 text-xs">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="flex items-center gap-1 text-cyan-600">
-                                            <Circle className="h-3 w-3 fill-current" />
-                                            Đã lên lịch:
-                                        </span>
-                                        <span className="font-medium">{schedulingSummary?.scheduled || 0}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="flex items-center gap-1 text-green-600">
-                                            <PlayCircle className="h-3 w-3 fill-current" />
-                                            Đang chạy:
-                                        </span>
-                                        <span className="font-medium">{schedulingSummary?.['in-progress'] || 0}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="flex items-center gap-1 text-blue-600">
-                                            <CheckCircle className="h-3 w-3 fill-current" />
-                                            Hoàn thành:
-                                        </span>
-                                        <span className="font-medium">{schedulingSummary?.completed || 0}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="flex items-center gap-1 text-red-600">
-                                            <XCircle className="h-3 w-3 fill-current" />
-                                            Đã hủy:
-                                        </span>
-                                        <span className="font-medium">{schedulingSummary?.cancelled || 0}</span>
-                                    </div>
-                                </div>
                             </div>
 
                             <div className="space-y-2">

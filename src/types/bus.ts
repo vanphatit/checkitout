@@ -31,7 +31,7 @@ export interface Bus {
   seats: unknown[];
   driverName?: string; // Optional - not all buses have driver assigned yet
   status: "AVAILABLE" | "UNAVAILABLE";
-  images: string[];
+  images: { url: string; publicId: string }[];
   createdAt: string;
   updatedAt: string;
 }

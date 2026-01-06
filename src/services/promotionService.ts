@@ -29,6 +29,9 @@ export const promotionService = {
     const response = await api.get<PromotionListResponse>("/promotion", {
       params,
     });
+
+    console.log("Promotion Service - Get Promotions Response:", response);
+
     return response.data;
   },
 

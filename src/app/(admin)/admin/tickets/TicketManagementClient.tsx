@@ -5,6 +5,7 @@ import {
   TicketsAnalyticsResponse,
   TicketStatus,
   PaymentMethod,
+  SellerTicketStats,
 } from "@/types/ticket";
 import Link from "next/link";
 import {
@@ -41,11 +42,7 @@ export default function TicketManagementClient({
   );
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(search || "");
-  const [sellerStats, setSellerStats] = useState<{
-    totalIncome: number;
-    ticketCount: number;
-    averagePrice: number;
-  } | null>(null);
+  const [sellerStats, setSellerStats] = useState<SellerTicketStats | null>(null);
 
   const currentPage = page || 1;
   const statusFilter = status || "";
@@ -87,7 +84,7 @@ export default function TicketManagementClient({
     // Fetch seller stats
     ticketService
       .getSellerStats()
-      .then((stats) => {
+      .then((stats: any) => {
         setSellerStats(stats);
       })
       .catch((error) => {
@@ -169,11 +166,10 @@ export default function TicketManagementClient({
                 <div
                   className="absolute top-0 left-0 h-full bg-emerald-500 rounded-full transition-all duration-500"
                   style={{
-                    width: `${
-                      (sellerStats.ticketsByStatus.success /
-                        sellerStats.ticketCount) *
+                    width: `${(sellerStats.ticketsByStatus.success /
+                      sellerStats.ticketCount) *
                       100
-                    }%`,
+                      }%`,
                   }}
                 />
               </div>
@@ -201,11 +197,10 @@ export default function TicketManagementClient({
                 <div
                   className="absolute top-0 left-0 h-full bg-amber-500 rounded-full transition-all duration-500"
                   style={{
-                    width: `${
-                      (sellerStats.ticketsByStatus.pending /
-                        sellerStats.ticketCount) *
+                    width: `${(sellerStats.ticketsByStatus.pending /
+                      sellerStats.ticketCount) *
                       100
-                    }%`,
+                      }%`,
                   }}
                 />
               </div>
@@ -233,11 +228,10 @@ export default function TicketManagementClient({
                 <div
                   className="absolute top-0 left-0 h-full bg-rose-500 rounded-full transition-all duration-500"
                   style={{
-                    width: `${
-                      (sellerStats.ticketsByStatus.failed /
-                        sellerStats.ticketCount) *
+                    width: `${(sellerStats.ticketsByStatus.failed /
+                      sellerStats.ticketCount) *
                       100
-                    }%`,
+                      }%`,
                   }}
                 />
               </div>
@@ -265,11 +259,10 @@ export default function TicketManagementClient({
                 <div
                   className="absolute top-0 left-0 h-full bg-blue-500 rounded-full transition-all duration-500"
                   style={{
-                    width: `${
-                      (sellerStats.ticketsByStatus.transfer /
-                        sellerStats.ticketCount) *
+                    width: `${(sellerStats.ticketsByStatus.transfer /
+                      sellerStats.ticketCount) *
                       100
-                    }%`,
+                      }%`,
                   }}
                 />
               </div>
@@ -375,11 +368,10 @@ export default function TicketManagementClient({
                 key={p.value}
                 href={`?period=${p.value}&status=${statusFilter}&paymentMethod=${paymentFilter}`}
                 className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
-                ${
-                  periodFilter === p.value
+                ${periodFilter === p.value
                     ? "bg-slate-900 text-white border-slate-900 shadow-md"
                     : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
-                }`}
+                  }`}
               >
                 {p.label}
               </Link>
@@ -402,11 +394,10 @@ export default function TicketManagementClient({
                   key={s.value}
                   href={`?status=${s.value}&period=${periodFilter}&paymentMethod=${paymentFilter}`}
                   className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
-                  ${
-                    statusFilter === s.value
+                  ${statusFilter === s.value
                       ? "bg-slate-900 text-white border-slate-900 shadow-md"
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
-                  }`}
+                    }`}
                 >
                   {s.label}
                 </Link>
@@ -427,11 +418,10 @@ export default function TicketManagementClient({
                   key={pm.value}
                   href={`?paymentMethod=${pm.value}&status=${statusFilter}&period=${periodFilter}`}
                   className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
-                  ${
-                    paymentFilter === pm.value
+                  ${paymentFilter === pm.value
                       ? "bg-slate-900 text-white border-slate-900 shadow-md"
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
-                  }`}
+                    }`}
                 >
                   {pm.label}
                 </Link>
@@ -498,10 +488,9 @@ export default function TicketManagementClient({
                         <span className="text-xs text-slate-500">
                           {ticket.scheduling
                             ? `${new Date(
-                                ticket.scheduling.departureDate
-                              ).toLocaleDateString("vi-VN")} - ${
-                                ticket.scheduling.etd
-                              }`
+                              ticket.scheduling.departureDate
+                            ).toLocaleDateString("vi-VN")} - ${ticket.scheduling.etd
+                            }`
                             : "N/A"}
                         </span>
                       </div>
@@ -537,15 +526,14 @@ export default function TicketManagementClient({
                           ${ticketService.getStatusColor(ticket.status)}`}
                         >
                           <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              ticket.status === "SUCCESS"
-                                ? "bg-emerald-500 animate-pulse"
-                                : ticket.status === "PENDING"
+                            className={`w-1.5 h-1.5 rounded-full ${ticket.status === "SUCCESS"
+                              ? "bg-emerald-500 animate-pulse"
+                              : ticket.status === "PENDING"
                                 ? "bg-amber-500 animate-pulse"
                                 : ticket.status === "FAILED"
-                                ? "bg-rose-500"
-                                : "bg-blue-500"
-                            }`}
+                                  ? "bg-rose-500"
+                                  : "bg-blue-500"
+                              }`}
                           />
                           {ticket.status}
                         </span>
@@ -609,27 +597,23 @@ export default function TicketManagementClient({
 
           <nav className="flex items-center gap-2">
             <Link
-              href={`?page=${
-                pagination.hasPrevPage ? currentPage - 1 : 1
-              }&status=${statusFilter}&period=${periodFilter}&paymentMethod=${paymentFilter}`}
-              className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all ${
-                !pagination.hasPrevPage
-                  ? "opacity-30 pointer-events-none"
-                  : "bg-white hover:border-slate-900 shadow-sm"
-              }`}
+              href={`?page=${pagination.hasPrevPage ? currentPage - 1 : 1
+                }&status=${statusFilter}&period=${periodFilter}&paymentMethod=${paymentFilter}`}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all ${!pagination.hasPrevPage
+                ? "opacity-30 pointer-events-none"
+                : "bg-white hover:border-slate-900 shadow-sm"
+                }`}
             >
               <FiChevronLeft />
             </Link>
 
             <Link
-              href={`?page=${
-                pagination.hasNextPage ? currentPage + 1 : pagination.totalPages
-              }&status=${statusFilter}&period=${periodFilter}&paymentMethod=${paymentFilter}`}
-              className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all ${
-                !pagination.hasNextPage
-                  ? "opacity-30 pointer-events-none"
-                  : "bg-white hover:border-slate-900 shadow-sm"
-              }`}
+              href={`?page=${pagination.hasNextPage ? currentPage + 1 : pagination.totalPages
+                }&status=${statusFilter}&period=${periodFilter}&paymentMethod=${paymentFilter}`}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all ${!pagination.hasNextPage
+                ? "opacity-30 pointer-events-none"
+                : "bg-white hover:border-slate-900 shadow-sm"
+                }`}
             >
               <FiChevronRight />
             </Link>

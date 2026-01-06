@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ticketService } from "@/services/ticketService";
 import { Ticket } from "@/types/ticket";
@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ export default function PaymentSuccessPage() {
       try {
         const data = await ticketService.getTicketById(ticketId);
         setTicket(data);
-        
+
         // Load QR code
         try {
           const qrBlob = await ticketService.generateQRCode(ticketId);
@@ -50,7 +50,7 @@ export default function PaymentSuccessPage() {
     };
 
     fetchTicket();
-    
+
     // Cleanup QR code URL on unmount
     return () => {
       if (qrCodeUrl) {
@@ -177,8 +177,8 @@ export default function PaymentSuccessPage() {
                       <span className="font-bold text-slate-900">
                         {scheduling
                           ? new Date(
-                              scheduling.departureDate
-                            ).toLocaleDateString("vi-VN")
+                            scheduling.departureDate
+                          ).toLocaleDateString("vi-VN")
                           : "N/A"}
                       </span>
                     </div>
@@ -334,5 +334,17 @@ export default function PaymentSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
