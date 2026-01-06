@@ -192,19 +192,54 @@ export const userService = {
     );
     return resolveData<User>(response.data);
   },
-  
+
   async searchUserByEmailOrPhone(query: string): Promise<User | null> {
     try {
-      const response = await api.get<MaybeApiResponse<UsersCollection | User[]>>(
-        "/users",
-        {
-          params: { search: query, limit: 1 },
-        }
-      );
+      const response = await api.get<
+        MaybeApiResponse<UsersCollection | User[]>
+      >("/users", {
+        params: { search: query, limit: 1 },
+      });
       const collection = normalizeUsersCollection(response.data);
       return collection.items.length > 0 ? collection.items[0] : null;
-    } catch (error) {
+    } catch {
       return null;
     }
+  },
+
+  /**
+   * Get user by phone number (Admin/Seller only)
+   * Uses dedicated phone lookup endpoint
+   */
+  async getUserByPhone(phone: string): Promise<User | null> {
+    try {
+      const response = await api.get<MaybeApiResponse<User>>(
+        `/users/phone/${encodeURIComponent(phone)}`
+      );
+      return resolveData<User>(response.data);
+    } catch {
+      // Return null if user not found (404)
+      return null;
+    }
+  },
+
+  /**
+   * Get user statistics (Admin only)
+   */
+  async getUserStats(): Promise<{
+    total: number;
+    activeCount: number;
+    pendingCount: number;
+    sellerCount: number;
+  }> {
+    const response = await api.get<
+      MaybeApiResponse<{
+        total: number;
+        activeCount: number;
+        pendingCount: number;
+        sellerCount: number;
+      }>
+    >("/users/stats");
+    return resolveData(response.data);
   },
 };

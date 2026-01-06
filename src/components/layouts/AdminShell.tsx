@@ -50,7 +50,7 @@ export function AdminShell({ children }: AdminShellProps) {
         icon: Route,
         roles: ["ADMIN"],
       },
-      { href: "/admin/tickets", label: "Vé", icon: Ticket, roles: ["ADMIN"] },
+      { href: "/admin/tickets", label: "Vé", icon: Ticket, roles: ["SELLER"] },
       { href: "/admin/buses", label: "Xe", icon: BusFront, roles: ["ADMIN"] },
       {
         href: "/admin/promotion",

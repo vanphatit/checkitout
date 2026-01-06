@@ -67,7 +67,7 @@ export default function MyTicketsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] p-6 lg:p-10 text-slate-900 font-sans">
+    <div>
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>

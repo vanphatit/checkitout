@@ -57,11 +57,11 @@ export default function BusManagementClient({ page, search, status }: Props) {
   const totalPages = response?.totalPages || 1;
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] p-6 lg:p-10 text-slate-900">
+    <div>
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
-          <h2 className="text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-4xl font-black">
             Quản lý xe
           </h2>
         </div>
@@ -150,10 +150,10 @@ export default function BusManagementClient({ page, search, status }: Props) {
                           BUS
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-base font-bold text-slate-900 tracking-tight">
+                          <span className="text-base font-bold text-slate-900">
                             {bus.plateNo}
                           </span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase">
                             ID: {bus._id.slice(-6)}
                           </span>
                         </div>
@@ -161,7 +161,7 @@ export default function BusManagementClient({ page, search, status }: Props) {
                     </td>
                     <td className="p-5">
                       <div className="flex flex-col gap-1">
-                        <span className="text-sm font-bold text-slate-700">
+                        <span className="text-sm text-slate-700">
                           {bus.type}
                         </span>
                         <div className="flex items-center gap-1.5">
@@ -221,7 +221,7 @@ export default function BusManagementClient({ page, search, status }: Props) {
                       <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 text-3xl">
                         📭
                       </div>
-                      <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">
+                      <p className="text-slate-400 uppercase tracking-widest text-xs">
                         No records found
                       </p>
                     </div>
@@ -233,7 +233,7 @@ export default function BusManagementClient({ page, search, status }: Props) {
         </div>
 
         <div className="px-6 py-5 flex items-center justify-between bg-slate-50/50 border-t border-slate-100">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+          <span className="text-xs text-slate-400 uppercase tracking-widest">
             Page {currentPage} of {totalPages}
           </span>
 

@@ -41,6 +41,11 @@ export default function TicketManagementClient({
   );
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(search || "");
+  const [sellerStats, setSellerStats] = useState<{
+    totalIncome: number;
+    ticketCount: number;
+    averagePrice: number;
+  } | null>(null);
 
   const currentPage = page || 1;
   const statusFilter = status || "";
@@ -71,12 +76,23 @@ export default function TicketManagementClient({
       if (paymentFilter) params.paymentMethod = paymentFilter as PaymentMethod;
     }
 
+    // Fetch tickets data
     ticketService
       .getAllTickets(params)
       .then((res) => {
         setResponse(res);
       })
       .finally(() => setLoading(false));
+
+    // Fetch seller stats
+    ticketService
+      .getSellerStats()
+      .then((stats) => {
+        setSellerStats(stats);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch seller stats:", error);
+      });
   }, [currentPage, statusFilter, periodFilter, paymentFilter, searchQuery]);
 
   if (loading) {
@@ -105,13 +121,11 @@ export default function TicketManagementClient({
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] p-6 lg:p-10 text-slate-900 font-sans">
+    <div>
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
-          <h2 className="text-3xl font-bold text-neutral-900">
-            Quản lý vé
-          </h2>
+          <h2 className="text-3xl font-bold text-neutral-900">Quản lý vé</h2>
           <p className="text-sm text-neutral-500 mt-1">
             Quản lý và theo dõi tất cả vé trong hệ thống
           </p>
@@ -134,48 +148,143 @@ export default function TicketManagementClient({
         </div>
       </div>
 
-      {/* --- SUMMARY STATS --- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <FiDollarSign className="w-5 h-5 text-blue-600" />
+      {/* --- TICKET STATUS BREAKDOWN --- */}
+      {sellerStats && sellerStats.ticketsByStatus && (
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm mb-8">
+          <h3 className="text-sm font-bold text-neutral-700 mb-4 uppercase tracking-wider">
+            Phân bổ trạng thái vé ( {sellerStats.ticketCount} vé)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Success */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
+                  Thành công
+                </span>
+                <span className="text-sm font-bold text-emerald-900">
+                  {sellerStats.ticketsByStatus.success}
+                </span>
+              </div>
+              <div className="relative w-full h-3 bg-emerald-100 rounded-full overflow-hidden">
+                <div
+                  className="absolute top-0 left-0 h-full bg-emerald-500 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${
+                      (sellerStats.ticketsByStatus.success /
+                        sellerStats.ticketCount) *
+                      100
+                    }%`,
+                  }}
+                />
+              </div>
+              <span className="text-xs text-neutral-500">
+                {(
+                  (sellerStats.ticketsByStatus.success /
+                    sellerStats.ticketCount) *
+                  100
+                ).toFixed(1)}
+                %
+              </span>
             </div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-              Tổng doanh thu
-            </h3>
-          </div>
-          <p className="text-2xl font-bold text-neutral-900">
-            {ticketService.formatCurrency(summary.totalRevenue)}
-          </p>
-        </div>
 
-        <div className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-emerald-50 rounded-lg">
-              <FiShoppingCart className="w-5 h-5 text-emerald-600" />
+            {/* Pending */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
+                  Chờ thanh toán
+                </span>
+                <span className="text-sm font-bold text-amber-900">
+                  {sellerStats.ticketsByStatus.pending}
+                </span>
+              </div>
+              <div className="relative w-full h-3 bg-amber-100 rounded-full overflow-hidden">
+                <div
+                  className="absolute top-0 left-0 h-full bg-amber-500 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${
+                      (sellerStats.ticketsByStatus.pending /
+                        sellerStats.ticketCount) *
+                      100
+                    }%`,
+                  }}
+                />
+              </div>
+              <span className="text-xs text-neutral-500">
+                {(
+                  (sellerStats.ticketsByStatus.pending /
+                    sellerStats.ticketCount) *
+                  100
+                ).toFixed(1)}
+                %
+              </span>
             </div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-              Số lượng vé
-            </h3>
-          </div>
-          <p className="text-2xl font-bold text-neutral-900">{summary.ticketCount}</p>
-        </div>
 
-        <div className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-purple-50 rounded-lg">
-              <FiTrendingUp className="w-5 h-5 text-purple-600" />
+            {/* Failed */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider">
+                  Thất bại
+                </span>
+                <span className="text-sm font-bold text-rose-900">
+                  {sellerStats.ticketsByStatus.failed}
+                </span>
+              </div>
+              <div className="relative w-full h-3 bg-rose-100 rounded-full overflow-hidden">
+                <div
+                  className="absolute top-0 left-0 h-full bg-rose-500 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${
+                      (sellerStats.ticketsByStatus.failed /
+                        sellerStats.ticketCount) *
+                      100
+                    }%`,
+                  }}
+                />
+              </div>
+              <span className="text-xs text-neutral-500">
+                {(
+                  (sellerStats.ticketsByStatus.failed /
+                    sellerStats.ticketCount) *
+                  100
+                ).toFixed(1)}
+                %
+              </span>
             </div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-              Giá vé trung bình
-            </h3>
+
+            {/* Transfer */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                  Đã chuyển
+                </span>
+                <span className="text-sm font-bold text-blue-900">
+                  {sellerStats.ticketsByStatus.transfer}
+                </span>
+              </div>
+              <div className="relative w-full h-3 bg-blue-100 rounded-full overflow-hidden">
+                <div
+                  className="absolute top-0 left-0 h-full bg-blue-500 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${
+                      (sellerStats.ticketsByStatus.transfer /
+                        sellerStats.ticketCount) *
+                      100
+                    }%`,
+                  }}
+                />
+              </div>
+              <span className="text-xs text-neutral-500">
+                {(
+                  (sellerStats.ticketsByStatus.transfer /
+                    sellerStats.ticketCount) *
+                  100
+                ).toFixed(1)}
+                %
+              </span>
+            </div>
           </div>
-          <p className="text-2xl font-bold text-neutral-900">
-            {ticketService.formatCurrency(summary.averageTicketPrice)}
-          </p>
         </div>
-      </div>
+      )}
 
       {/* --- SEARCH BOX --- */}
       <div className="mb-6">
@@ -189,7 +298,6 @@ export default function TicketManagementClient({
               ? `/admin/tickets?search=${encodeURIComponent(search)}`
               : "/admin/tickets";
           }}
-          className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm"
         >
           <div className="flex items-center gap-3">
             <div className="flex-1 relative">
@@ -252,85 +360,85 @@ export default function TicketManagementClient({
       {/* --- FILTERS --- */}
       {!searchQuery && (
         <div className="mt-8 mb-4 flex flex-col gap-4">
-        {/* Period Filter */}
-        <div className="flex items-center gap-2 w-full overflow-x-auto pb-2">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 ml-1 flex items-center gap-1">
-            <FiFilter /> Thời gian:
-          </span>
-          {[
-            { value: "today", label: "Hôm nay" },
-            { value: "thisMonth", label: "Tháng này" },
-            { value: "thisYear", label: "Năm này" },
-            { value: "allTime", label: "Tất cả" },
-          ].map((p) => (
-            <Link
-              key={p.value}
-              href={`?period=${p.value}&status=${statusFilter}&paymentMethod=${paymentFilter}`}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
+          {/* Period Filter */}
+          <div className="flex items-center gap-2 w-full overflow-x-auto pb-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 ml-1 flex items-center gap-1">
+              <FiFilter /> Thời gian:
+            </span>
+            {[
+              { value: "today", label: "Hôm nay" },
+              { value: "thisMonth", label: "Tháng này" },
+              { value: "thisYear", label: "Năm này" },
+              { value: "allTime", label: "Tất cả" },
+            ].map((p) => (
+              <Link
+                key={p.value}
+                href={`?period=${p.value}&status=${statusFilter}&paymentMethod=${paymentFilter}`}
+                className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
                 ${
                   periodFilter === p.value
                     ? "bg-slate-900 text-white border-slate-900 shadow-md"
                     : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
                 }`}
-            >
-              {p.label}
-            </Link>
-          ))}
-        </div>
+              >
+                {p.label}
+              </Link>
+            ))}
+          </div>
 
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Status Filter */}
-          <div className="flex items-center gap-2 w-full overflow-x-auto pb-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 ml-1 flex items-center gap-1">
-              Trạng thái:
-            </span>
-            {[
-              { value: "SUCCESS", label: "Thành công" },
-              { value: "PENDING", label: "Chờ thanh toán" },
-              { value: "FAILED", label: "Thất bại" },
-              { value: "TRANSFER", label: "Đã chuyển" },
-            ].map((s) => (
-              <Link
-                key={s.value}
-                href={`?status=${s.value}&period=${periodFilter}&paymentMethod=${paymentFilter}`}
-                className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Status Filter */}
+            <div className="flex items-center gap-2 w-full overflow-x-auto pb-2">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 ml-1 flex items-center gap-1">
+                Trạng thái:
+              </span>
+              {[
+                { value: "SUCCESS", label: "Thành công" },
+                { value: "PENDING", label: "Chờ thanh toán" },
+                { value: "FAILED", label: "Thất bại" },
+                { value: "TRANSFER", label: "Đã chuyển" },
+              ].map((s) => (
+                <Link
+                  key={s.value}
+                  href={`?status=${s.value}&period=${periodFilter}&paymentMethod=${paymentFilter}`}
+                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
                   ${
                     statusFilter === s.value
                       ? "bg-slate-900 text-white border-slate-900 shadow-md"
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
                   }`}
-              >
-                {s.label}
-              </Link>
-            ))}
-          </div>
+                >
+                  {s.label}
+                </Link>
+              ))}
+            </div>
 
-          {/* Payment Method Filter */}
-          <div className="flex items-center gap-2 w-full overflow-x-auto pb-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 ml-1 flex items-center gap-1">
-              Thanh toán:
-            </span>
-            {[
-              { value: "", label: "Tất cả" },
-              { value: "BANKING", label: "Chuyển khoản" },
-              { value: "CASH", label: "Tiền mặt" },
-            ].map((pm) => (
-              <Link
-                key={pm.value}
-                href={`?paymentMethod=${pm.value}&status=${statusFilter}&period=${periodFilter}`}
-                className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
+            {/* Payment Method Filter */}
+            <div className="flex items-center gap-2 w-full overflow-x-auto pb-2">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 ml-1 flex items-center gap-1">
+                Thanh toán:
+              </span>
+              {[
+                { value: "", label: "Tất cả" },
+                { value: "BANKING", label: "Chuyển khoản" },
+                { value: "CASH", label: "Tiền mặt" },
+              ].map((pm) => (
+                <Link
+                  key={pm.value}
+                  href={`?paymentMethod=${pm.value}&status=${statusFilter}&period=${periodFilter}`}
+                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
                   ${
                     paymentFilter === pm.value
                       ? "bg-slate-900 text-white border-slate-900 shadow-md"
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
                   }`}
-              >
-                {pm.label}
-              </Link>
-            ))}
+                >
+                  {pm.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
       )}
 
       {/* --- DATA TABLE --- */}
@@ -515,9 +623,7 @@ export default function TicketManagementClient({
 
             <Link
               href={`?page=${
-                pagination.hasNextPage
-                  ? currentPage + 1
-                  : pagination.totalPages
+                pagination.hasNextPage ? currentPage + 1 : pagination.totalPages
               }&status=${statusFilter}&period=${periodFilter}&paymentMethod=${paymentFilter}`}
               className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all ${
                 !pagination.hasNextPage

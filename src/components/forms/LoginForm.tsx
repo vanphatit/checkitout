@@ -47,11 +47,18 @@ export function LoginForm() {
   // Show toast when error changes
   React.useEffect(() => {
     if (error) {
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: error,
-      });
+      // Don't show toast for 401/TOKEN_INVALID errors (handled by axios interceptor)
+      if (
+        !error.includes("TOKEN_INVALID") &&
+        !error.includes("401") &&
+        !error.includes("Unauthorized")
+      ) {
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: error,
+        });
+      }
       dispatch(clearError());
     }
   }, [error, toast, dispatch]);
@@ -69,8 +76,17 @@ export function LoginForm() {
     try {
       const result = await dispatch(loginUser(data));
       if (loginUser.fulfilled.match(result)) {
+        // Redirect based on user role
+        const user = result.payload;
+        const role = user?.role;
 
-        router.push("/");
+        if (role === "ADMIN") {
+          router.push("/admin");
+        } else if (role === "SELLER") {
+          router.push("/admin/tickets");
+        } else {
+          router.push("/");
+        }
       } else if (loginUser.rejected.match(result)) {
         const error = result.payload as string;
         if (error.includes("verify your email") || error.includes("PENDING")) {
@@ -151,10 +167,11 @@ export function LoginForm() {
               setLoginMethod("email");
               form.setValue("phone", "");
             }}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${loginMethod === "email"
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              loginMethod === "email"
                 ? "bg-white text-primary shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
-              }`}
+            }`}
           >
             <AtSign className="inline-block w-4 h-4 mr-2" />
             Email
@@ -165,10 +182,11 @@ export function LoginForm() {
               setLoginMethod("phone");
               form.setValue("email", "");
             }}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${loginMethod === "phone"
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              loginMethod === "phone"
                 ? "bg-white text-primary shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
-              }`}
+            }`}
           >
             <Phone className="inline-block w-4 h-4 mr-2" />
             Phone

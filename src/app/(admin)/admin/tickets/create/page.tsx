@@ -13,7 +13,10 @@ import { BusType } from "@/types/bus";
 import SeatLegend from "@/components/busseat/seat/SeatLegend";
 import SeatGrid from "@/components/busseat/seat/SeatGrid";
 import SeatSelectionWithSocket from "@/components/admin/SeatSelectionWithSocket";
-import { SeatWebSocketProvider, useSeatWebSocketContext } from "@/components/providers/SeatWebSocketProvider";
+import {
+  SeatWebSocketProvider,
+  useSeatWebSocketContext,
+} from "@/components/providers/SeatWebSocketProvider";
 import {
   FiArrowLeft,
   FiSearch,
@@ -37,7 +40,8 @@ export default function CreateTicketPage() {
   const [searchDate, setSearchDate] = useState("");
   const [schedulings, setSchedulings] = useState<Scheduling[]>([]);
   const [schedulingLoading, setSchedulingLoading] = useState(false);
-  const [selectedScheduling, setSelectedScheduling] = useState<Scheduling | null>(null);
+  const [selectedScheduling, setSelectedScheduling] =
+    useState<Scheduling | null>(null);
 
   // Step 2: Search/Create Customer
   const [customerSearch, setCustomerSearch] = useState("");
@@ -57,7 +61,9 @@ export default function CreateTicketPage() {
   const [seatsLoading, setSeatsLoading] = useState(false);
 
   // Step 4: Confirm & Payment
-  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "BANKING">("CASH");
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "BANKING">(
+    "CASH"
+  );
   const [creating, setCreating] = useState(false);
   const [createdTicket, setCreatedTicket] = useState<any>(null);
 
@@ -92,7 +98,8 @@ export default function CreateTicketPage() {
 
     setCustomerLoading(true);
     try {
-      const user = await userService.searchUserByEmailOrPhone(customerSearch);
+      // Use dedicated phone lookup endpoint
+      const user = await userService.getUserByPhone(customerSearch);
       if (user) {
         // Found existing user - show info, DON'T auto-load seats
         setSelectedCustomer(user);
@@ -108,11 +115,16 @@ export default function CreateTicketPage() {
           firstName: "",
           lastName: "",
           email: "",
-          phone: customerSearch
+          phone: customerSearch,
         });
       }
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Không thể tìm kiếm khách hàng");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (error as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message || "Không thể tìm kiếm khách hàng";
+      alert(errorMessage);
     } finally {
       setCustomerLoading(false);
     }
@@ -149,7 +161,9 @@ export default function CreateTicketPage() {
     setSeatsLoading(true);
     setCurrentStep("select-seat");
     try {
-      const result = await seatService.getSeatsByBusId(selectedScheduling.busIds[0]._id);
+      const result = await seatService.getSeatsByBusId(
+        selectedScheduling.busIds[0]._id
+      );
       setSeats(result);
     } catch (error: any) {
       alert(error.response?.data?.message || "Không thể tải danh sách ghế");
@@ -159,7 +173,7 @@ export default function CreateTicketPage() {
   };
 
   const handleSelectSeat = (seatNo: string) => {
-    const seat = seats.find(s => s.seatNo === seatNo);
+    const seat = seats.find((s) => s.seatNo === seatNo);
     if (!seat || seat.status !== "EMPTY") return;
     setSelectedSeat(seat);
   };
@@ -234,7 +248,9 @@ export default function CreateTicketPage() {
             <StepIndicator
               label="Tìm chuyến đi"
               active={currentStep === "search-scheduling"}
-              completed={["search-customer", "select-seat", "confirm"].includes(currentStep)}
+              completed={["search-customer", "select-seat", "confirm"].includes(
+                currentStep
+              )}
             />
             <div className="w-12 h-1 bg-slate-200" />
             <StepIndicator
@@ -323,10 +339,14 @@ export default function CreateTicketPage() {
                           {scheduling.routeId?.name || "N/A"}
                         </h4>
                         <p className="text-sm text-slate-600">
-                          {new Date(scheduling.departureDate).toLocaleDateString("vi-VN")} - {scheduling.etd}
+                          {new Date(
+                            scheduling.departureDate
+                          ).toLocaleDateString("vi-VN")}{" "}
+                          - {scheduling.etd}
                         </p>
                         <p className="text-sm text-slate-500">
-                          Xe: {scheduling.busIds?.[0]?.plateNo} | Ghế trống: {(scheduling.availableSeats || 0)}
+                          Xe: {scheduling.busIds?.[0]?.plateNo} | Ghế trống:{" "}
+                          {scheduling.availableSeats || 0}
                         </p>
                       </div>
                       <div className="text-right">
@@ -369,13 +389,14 @@ export default function CreateTicketPage() {
             </div>
             <div className="mb-6">
               <label className="block text-sm font-bold text-slate-700 mb-2">
-                Số điện thoại khách hàng <span className="text-rose-500">*</span>
+                Số điện thoại khách hàng{" "}
+                <span className="text-rose-500">*</span>
               </label>
               <input
                 type="tel"
                 value={customerSearch}
                 onChange={(e) => setCustomerSearch(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearchCustomer()}
+                onKeyPress={(e) => e.key === "Enter" && handleSearchCustomer()}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Nhập số điện thoại (VD: 0919121299)"
               />
@@ -411,21 +432,29 @@ export default function CreateTicketPage() {
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-xs text-blue-600 font-semibold mb-1">Họ tên</p>
+                      <p className="text-xs text-blue-600 font-semibold mb-1">
+                        Họ tên
+                      </p>
                       <p className="text-base font-bold text-blue-900">
                         {selectedCustomer.firstName} {selectedCustomer.lastName}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-blue-600 font-semibold mb-1">Số điện thoại</p>
+                      <p className="text-xs text-blue-600 font-semibold mb-1">
+                        Số điện thoại
+                      </p>
                       <p className="text-base font-bold text-blue-900">
                         {selectedCustomer.phone}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-blue-600 font-semibold mb-1">Email</p>
+                      <p className="text-xs text-blue-600 font-semibold mb-1">
+                        Email
+                      </p>
                       <p className="text-base font-bold text-blue-900">
-                        {selectedCustomer.email || <span className="text-slate-400 italic">Chưa có</span>}
+                        {selectedCustomer.email || (
+                          <span className="text-slate-400 italic">Chưa có</span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -474,7 +503,8 @@ export default function CreateTicketPage() {
                 </button>
               </div>
               <p className="text-sm text-amber-700">
-                Vui lòng nhập thông tin khách hàng. Hệ thống sẽ tự động tạo tài khoản khi đặt vé.
+                Vui lòng nhập thông tin khách hàng. Hệ thống sẽ tự động tạo tài
+                khoản khi đặt vé.
               </p>
             </div>
             <div className="grid grid-cols-1 gap-4 mb-6">
@@ -501,7 +531,10 @@ export default function CreateTicketPage() {
                     type="text"
                     value={newCustomer.firstName}
                     onChange={(e) =>
-                      setNewCustomer({ ...newCustomer, firstName: e.target.value })
+                      setNewCustomer({
+                        ...newCustomer,
+                        firstName: e.target.value,
+                      })
                     }
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Tùy chọn"
@@ -515,7 +548,10 @@ export default function CreateTicketPage() {
                     type="text"
                     value={newCustomer.lastName}
                     onChange={(e) =>
-                      setNewCustomer({ ...newCustomer, lastName: e.target.value })
+                      setNewCustomer({
+                        ...newCustomer,
+                        lastName: e.target.value,
+                      })
                     }
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Tùy chọn"
@@ -524,7 +560,8 @@ export default function CreateTicketPage() {
               </div>
             </div>
             <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
-              ℹ️ Nếu không nhập họ tên, hệ thống sẽ đặt mặc định là "Guest Customer"
+              ℹ️ Nếu không nhập họ tên, hệ thống sẽ đặt mặc định là "Guest
+              Customer"
             </p>
             <div className="flex gap-3">
               <button
@@ -548,21 +585,23 @@ export default function CreateTicketPage() {
         )}
 
         {/* Step 3: Select Seat */}
-        {currentStep === "select-seat" && selectedScheduling && selectedCustomer && (
-          <SeatSelectionWithSocket
-            scheduling={selectedScheduling}
-            customer={selectedCustomer}
-            onBack={() => {
-              setCurrentStep("search-customer");
-              setSeats([]);
-              setSelectedSeat(null);
-            }}
-            onContinue={(seat) => {
-              setSelectedSeat(seat);
-              setCurrentStep("confirm");
-            }}
-          />
-        )}
+        {currentStep === "select-seat" &&
+          selectedScheduling &&
+          selectedCustomer && (
+            <SeatSelectionWithSocket
+              scheduling={selectedScheduling}
+              customer={selectedCustomer}
+              onBack={() => {
+                setCurrentStep("search-customer");
+                setSeats([]);
+                setSelectedSeat(null);
+              }}
+              onContinue={(seat) => {
+                setSelectedSeat(seat);
+                setCurrentStep("confirm");
+              }}
+            />
+          )}
 
         {/* Step 4: Confirm */}
         {currentStep === "confirm" && !createdTicket && (
@@ -584,9 +623,15 @@ export default function CreateTicketPage() {
             <div className="space-y-6 mb-8">
               <div className="bg-slate-50 rounded-xl p-5">
                 <h3 className="font-bold text-slate-900 mb-3">Chuyến đi</h3>
-                <p className="text-slate-700">{selectedScheduling?.routeId?.name}</p>
+                <p className="text-slate-700">
+                  {selectedScheduling?.routeId?.name}
+                </p>
                 <p className="text-sm text-slate-500">
-                  {selectedScheduling && new Date(selectedScheduling.departureDate).toLocaleDateString("vi-VN")} - {selectedScheduling?.etd}
+                  {selectedScheduling &&
+                    new Date(
+                      selectedScheduling.departureDate
+                    ).toLocaleDateString("vi-VN")}{" "}
+                  - {selectedScheduling?.etd}
                 </p>
               </div>
               <div className="bg-slate-50 rounded-xl p-5">
@@ -594,30 +639,36 @@ export default function CreateTicketPage() {
                 <p className="text-slate-700">
                   {selectedCustomer?.firstName} {selectedCustomer?.lastName}
                 </p>
-                <p className="text-sm text-slate-500">{selectedCustomer?.phone}</p>
+                <p className="text-sm text-slate-500">
+                  {selectedCustomer?.phone}
+                </p>
               </div>
               <div className="bg-slate-50 rounded-xl p-5">
                 <h3 className="font-bold text-slate-900 mb-3">Ghế</h3>
                 <p className="text-slate-700">{selectedSeat?.seatNo}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-5">
-                <h3 className="font-bold text-slate-900 mb-3">Phương thức thanh toán</h3>
+                <h3 className="font-bold text-slate-900 mb-3">
+                  Phương thức thanh toán
+                </h3>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setPaymentMethod("CASH")}
-                    className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${paymentMethod === "CASH"
+                    className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${
+                      paymentMethod === "CASH"
                         ? "bg-green-50 border-green-500 text-green-700"
                         : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
-                      }`}
+                    }`}
                   >
                     Tiền mặt
                   </button>
                   <button
                     onClick={() => setPaymentMethod("BANKING")}
-                    className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${paymentMethod === "BANKING"
+                    className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${
+                      paymentMethod === "BANKING"
                         ? "bg-blue-50 border-blue-500 text-blue-700"
                         : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
-                      }`}
+                    }`}
                   >
                     Chuyển khoản
                   </button>
@@ -713,18 +764,20 @@ function StepIndicator({
   return (
     <div className="flex flex-col items-center">
       <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${completed
+        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+          completed
             ? "bg-emerald-500 text-white"
             : active
-              ? "bg-blue-600 text-white"
-              : "bg-slate-200 text-slate-400"
-          }`}
+            ? "bg-blue-600 text-white"
+            : "bg-slate-200 text-slate-400"
+        }`}
       >
         {completed ? <FiCheckCircle /> : active ? "●" : "○"}
       </div>
       <span
-        className={`text-xs mt-2 font-bold ${active ? "text-blue-600" : "text-slate-400"
-          }`}
+        className={`text-xs mt-2 font-bold ${
+          active ? "text-blue-600" : "text-slate-400"
+        }`}
       >
         {label}
       </span>
