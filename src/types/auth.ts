@@ -10,6 +10,9 @@ export interface User {
   emailVerifiedAt?: string | null;
   lastLoginAt?: string | null;
   lastLoginIp?: string | null;
+  authProvider?: "local" | "google" | "facebook" | "github";
+  isOAuthUser?: boolean;
+  isPhoneVerified?: boolean;
   createdAt: string;
   updatedAt?: string;
 }

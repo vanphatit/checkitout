@@ -3,7 +3,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { BookingSummaryProps } from "@/types/bus";
 import { ticketService } from "@/services/ticketService";
-import { FiLoader } from "react-icons/fi";
+import { promotionService } from "@/services/promotionService";
+import { Promotion } from "@/types/promotion";
+import { FiLoader, FiTag } from "react-icons/fi";
 
 export default function BookingSummary({
   selectedSeats,
@@ -17,19 +19,93 @@ export default function BookingSummary({
   estimatedDuration,
 }: BookingSummaryProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [promotionCode, setPromotionCode] = useState("");
+  const [appliedPromotion, setAppliedPromotion] = useState<Promotion | null>(
+    null
+  );
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
   const routeName = routeData.name;
 
   const [from, to] = routeName.split(" - ");
 
-  const total = selectedSeats.reduce((sum, seatId) => {
+  const subtotal = selectedSeats.reduce((sum, seatId) => {
     const seat = data.find((x) => x.seatNo === seatId);
     return sum + (seat ? price : 0);
   }, 0);
+
+  // Calculate discount amount
+  const discountAmount = appliedPromotion
+    ? Math.round((subtotal * appliedPromotion.value) / 100)
+    : 0;
+
+  // Calculate final total
+  const total = subtotal - discountAmount;
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
+  };
+
+  const handleApplyPromotion = async () => {
+    if (!promotionCode.trim()) {
+      setPromoError("Vui lòng nhập mã khuyến mãi");
+      return;
+    }
+
+    setIsValidatingPromo(true);
+    setPromoError(null);
+
+    try {
+      const promotion = await promotionService.getPromotionByCode(
+        promotionCode.trim()
+      );
+
+      // Check if promotion is active
+      if (!promotion.isActive) {
+        setPromoError("Mã khuyến mãi đã hết hạn hoặc không còn hiệu lực");
+        setAppliedPromotion(null);
+        return;
+      }
+
+      // Check expiry date
+      const now = new Date();
+      const expiryDate = new Date(promotion.expiryDate);
+      if (expiryDate < now) {
+        setPromoError("Mã khuyến mãi đã hết hạn");
+        setAppliedPromotion(null);
+        return;
+      }
+
+      // Check start date
+      const startDate = new Date(promotion.startDate);
+      if (startDate > now) {
+        setPromoError("Mã khuyến mãi chưa có hiệu lực");
+        setAppliedPromotion(null);
+        return;
+      }
+
+      setAppliedPromotion(promotion);
+      setPromoError(null);
+    } catch (error: unknown) {
+      console.error("Promotion validation error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (error as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message || "Mã khuyến mãi không hợp lệ";
+      setPromoError(errorMessage);
+      setAppliedPromotion(null);
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
+
+  const handleRemovePromotion = () => {
+    setAppliedPromotion(null);
+    setPromotionCode("");
+    setPromoError(null);
   };
 
   const handleCheckout = async () => {
@@ -59,6 +135,7 @@ export default function BookingSummary({
         seatId,
         schedulingId,
         paymentMethod: "BANKING",
+        ...(appliedPromotion && { promotionCode: appliedPromotion.code }),
       });
 
       if (result.payment.success && result.payment.paymentUrl) {
@@ -67,12 +144,14 @@ export default function BookingSummary({
       } else {
         alert("Không thể tạo link thanh toán. Vui lòng thử lại.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Checkout error:", error);
-      alert(
-        error.response?.data?.message ||
-          "Có lỗi xảy ra khi tạo vé. Vui lòng thử lại."
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (error as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message || "Có lỗi xảy ra khi tạo vé. Vui lòng thử lại.";
+      alert(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -152,6 +231,71 @@ export default function BookingSummary({
           )}
         </div>
 
+        {/* Promotion Code */}
+        <div className="space-y-2">
+          <h3 className="text-lg text-neutral-600 font-medium">
+            Mã khuyến mãi
+          </h3>
+          {!appliedPromotion ? (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={promotionCode}
+                  onChange={(e) =>
+                    setPromotionCode(e.target.value.toUpperCase())
+                  }
+                  placeholder="Nhập mã khuyến mãi"
+                  className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  disabled={isValidatingPromo}
+                />
+                <button
+                  onClick={handleApplyPromotion}
+                  disabled={isValidatingPromo || !promotionCode.trim()}
+                  className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isValidatingPromo ? (
+                    <>
+                      <FiLoader className="w-4 h-4 animate-spin" />
+                      Kiểm tra
+                    </>
+                  ) : (
+                    "Áp dụng"
+                  )}
+                </button>
+              </div>
+              {promoError && (
+                <p className="text-xs text-red-500">{promoError}</p>
+              )}
+            </div>
+          ) : (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FiTag className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-700">
+                    {appliedPromotion.code}
+                  </span>
+                </div>
+                <button
+                  onClick={handleRemovePromotion}
+                  className="text-xs text-red-500 hover:text-red-700"
+                >
+                  Xóa
+                </button>
+              </div>
+              <p className="text-xs text-green-600">
+                {appliedPromotion.name} - Giảm {appliedPromotion.value}%
+              </p>
+              {appliedPromotion.description && (
+                <p className="text-xs text-neutral-500">
+                  {appliedPromotion.description}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Fare */}
         <div className="space-y-4">
           <div className="flex items-center justify-between border-dashed border-l pl-2">
@@ -160,6 +304,24 @@ export default function BookingSummary({
               {price.toLocaleString()} VND
             </p>
           </div>
+
+          <div className="flex items-center justify-between border-dashed border-l pl-2">
+            <h3 className="text-sm text-neutral-500">Tạm tính:</h3>
+            <p className="text-sm text-neutral-600">
+              {subtotal.toLocaleString()} VND
+            </p>
+          </div>
+
+          {appliedPromotion && (
+            <div className="flex items-center justify-between border-dashed border-l pl-2">
+              <h3 className="text-sm text-green-600">
+                Giảm giá ({appliedPromotion.value}%):
+              </h3>
+              <p className="text-sm text-green-600">
+                -{discountAmount.toLocaleString()} VND
+              </p>
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <h3 className="text-base text-neutral-500">Tổng giá</h3>
@@ -176,7 +338,7 @@ export default function BookingSummary({
           <button
             onClick={handleCheckout}
             disabled={isProcessing}
-            className="block w-full bg-primary hover:bg-primary/90 text-sm text-white py-2.5 rounded-lg text-center uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-primary hover:bg-primary/90 text-sm text-white py-2.5 rounded-lg text-center uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isProcessing ? (
               <>

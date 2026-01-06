@@ -36,8 +36,7 @@ export const ticketService = {
       query.append("paymentMethod", params.paymentMethod);
     if (params?.email) query.append("email", params.email);
     if (params?.phone) query.append("phone", params.phone);
-    if (params?.schedulingId)
-      query.append("schedulingId", params.schedulingId);
+    if (params?.schedulingId) query.append("schedulingId", params.schedulingId);
 
     // Nếu search theo email hoặc phone, dùng endpoint /ticket
     if (params?.email || params?.phone) {
@@ -45,41 +44,61 @@ export const ticketService = {
         `/ticket?${query}`
       );
       const pageData = resolveData(res.data);
-      
+
       // Convert TicketsPageResponse to TicketsAnalyticsResponse format
-      const tickets = pageData.data.map((ticket): TicketListItem => ({
-        _id: ticket._id,
-        totalPrice: ticket.totalPrice,
-        paymentMethod: ticket.paymentMethod,
-        status: ticket.status,
-        createdAt: ticket.createdAt,
-        updatedAt: ticket.updatedAt,
-        paidAt: ticket.paidAt,
-        user: typeof ticket.userId === 'object' ? {
-          name: `${ticket.userId.firstName} ${ticket.userId.lastName}`,
-          email: ticket.userId.email || '',
-          phone: ticket.userId.phone || '',
-        } : null,
-        seat: typeof ticket.seatId === 'object' ? ticket.seatId.seatNo : '',
-        scheduling: typeof ticket.schedulingId === 'object' ? {
-          departureDate: ticket.schedulingId.departureDate,
-          etd: ticket.schedulingId.etd,
-        } : null,
-        promotion: ticket.promotionId && typeof ticket.promotionId === 'object' ? {
-          name: ticket.promotionId.name,
-          value: ticket.promotionId.value,
-        } : null,
-      }));
+      const tickets = pageData.data.map(
+        (ticket): TicketListItem => ({
+          _id: ticket._id,
+          totalPrice: ticket.totalPrice,
+          paymentMethod: ticket.paymentMethod,
+          status: ticket.status,
+          createdAt: ticket.createdAt,
+          updatedAt: ticket.updatedAt,
+          paidAt: ticket.paidAt,
+          user:
+            typeof ticket.userId === "object"
+              ? {
+                  name: `${ticket.userId.firstName} ${ticket.userId.lastName}`,
+                  email: ticket.userId.email || "",
+                  phone: ticket.userId.phone || "",
+                }
+              : null,
+          seat: typeof ticket.seatId === "object" ? ticket.seatId.seatNo : "",
+          scheduling:
+            typeof ticket.schedulingId === "object"
+              ? {
+                  departureDate: ticket.schedulingId.departureDate,
+                  etd: ticket.schedulingId.etd,
+                }
+              : null,
+          promotion:
+            ticket.promotionId && typeof ticket.promotionId === "object"
+              ? {
+                  name: ticket.promotionId.name,
+                  value: ticket.promotionId.value,
+                }
+              : null,
+        })
+      );
 
       // Calculate summary from tickets
-      const totalRevenue = tickets.reduce((sum, t) => sum + (t.status === TicketStatus.SUCCESS ? t.totalPrice : 0), 0);
-      const successTickets = tickets.filter(t => t.status === TicketStatus.SUCCESS);
-      
+      const totalRevenue = tickets.reduce(
+        (sum, t) =>
+          sum + (t.status === TicketStatus.SUCCESS ? t.totalPrice : 0),
+        0
+      );
+      const successTickets = tickets.filter(
+        (t) => t.status === TicketStatus.SUCCESS
+      );
+
       return {
         summary: {
           totalRevenue,
           ticketCount: tickets.length,
-          averageTicketPrice: successTickets.length > 0 ? totalRevenue / successTickets.length : 0,
+          averageTicketPrice:
+            successTickets.length > 0
+              ? totalRevenue / successTickets.length
+              : 0,
         },
         byPaymentMethod: tickets.reduce((acc, t) => {
           const method = t.paymentMethod;
@@ -114,9 +133,7 @@ export const ticketService = {
   /**
    * Get current user's tickets
    */
-  async getMyTickets(params?: {
-    status?: string;
-  }): Promise<Ticket[]> {
+  async getMyTickets(params?: { status?: string }): Promise<Ticket[]> {
     const query = new URLSearchParams();
     if (params?.status) query.append("status", params.status);
 
@@ -137,10 +154,7 @@ export const ticketService = {
   /**
    * Get tickets by email (Admin/Seller only)
    */
-  async getTicketsByEmail(
-    email: string,
-    status?: string
-  ): Promise<Ticket[]> {
+  async getTicketsByEmail(email: string, status?: string): Promise<Ticket[]> {
     const query = new URLSearchParams();
     if (status) query.append("status", status);
 
@@ -153,10 +167,7 @@ export const ticketService = {
   /**
    * Get tickets by phone (Admin/Seller only)
    */
-  async getTicketsByPhone(
-    phone: string,
-    status?: string
-  ): Promise<Ticket[]> {
+  async getTicketsByPhone(phone: string, status?: string): Promise<Ticket[]> {
     const query = new URLSearchParams();
     if (status) query.append("status", status);
 
@@ -300,6 +311,7 @@ export const ticketService = {
     lastName?: string;
     paymentMethod?: string;
     fallbackURL?: string;
+    promotionCode?: string;
   }): Promise<{
     ticket: Ticket;
     payment: {

@@ -39,6 +39,8 @@ import { type RegisterData } from "@/types/auth";
 import { useAppDispatch, useAppSelector } from "@/hooks";
 import { registerUser, clearError } from "@/store/slices";
 import { useToast } from "@/hooks/use-toast";
+import { useGoogleOAuth } from "@/hooks";
+import { GoogleIcon } from "@/components/icons/GoogleIcon";
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -49,6 +51,7 @@ export function RegisterForm() {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const { error } = useAppSelector((state) => state.auth);
+  const { login: googleLogin, isLoading: isGoogleLoading } = useGoogleOAuth();
 
   // Show toast when error changes
   React.useEffect(() => {
@@ -339,6 +342,39 @@ export function RegisterForm() {
                 </>
               ) : (
                 "Create Account"
+              )}
+            </Button>
+
+            {/* OAuth Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            {/* Google OAuth Button */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={googleLogin}
+              disabled={isGoogleLoading || isLoading}
+              className="w-full h-11 border-gray-300 hover:bg-gray-50"
+            >
+              {isGoogleLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Connecting to Google...
+                </>
+              ) : (
+                <>
+                  <GoogleIcon className="mr-2 w-5 h-5" />
+                  Continue with Google
+                </>
               )}
             </Button>
 
