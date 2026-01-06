@@ -24,16 +24,17 @@ export function SeatItem({
         isSold
           ? "Sold"
           : isLockedByOthers
-            ? "Locked by another user"
-            : isLockedByMe
-              ? "Locked by you"
-              : "Available"
+          ? "Locked by another user"
+          : isLockedByMe
+          ? "Locked by you"
+          : "Available"
       }
     >
       <LuArmchair
-        className={`text-2xl transition-colors ${isSold
-          ? "text-neutral-400"
-          : isLockedByOthers
+        className={`text-2xl transition-colors ${
+          isSold
+            ? "text-neutral-400"
+            : isLockedByOthers
             ? "!text-orange-400 !opacity-60"
             : isSelected
               ? "!text-orange-500"

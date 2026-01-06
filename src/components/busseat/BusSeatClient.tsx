@@ -8,45 +8,41 @@ import { Route } from "@/types/booking";
 import { Seat } from "@/types/seat";
 
 interface BusSeatClientProps {
-    schedulingId: string;
-    busData: Bus;
-    routeData: Route;
-    seatData: Seat[];
-    price: number;
-    etd?: string;
-    eta?: string;
-    distance?: number;
-    estimatedDuration?: number;
+  schedulingId: string;
+  busData: Bus;
+  routeData: Route;
+  seatData: Seat[];
+  price: number;
+  etd?: string;
+  eta?: string;
+  distance?: number;
+  estimatedDuration?: number;
 }
 
 export default function BusSeatClient({
-    schedulingId,
-    busData,
-    routeData,
-    seatData,
-    price,
-    etd,
-    eta,
-    distance,
-    estimatedDuration,
+  schedulingId,
+  busData,
+  routeData,
+  seatData,
+  price,
+  etd,
+  eta,
+  distance,
+  estimatedDuration,
 }: BusSeatClientProps) {
-    console.log("🚨🚨🚨 BusSeatClient RENDERING - CHECK BROWSER CONSOLE! 🚨🚨🚨");
-    console.log("Scheduling ID:", schedulingId);
-    console.log("Is client-side?", typeof window !== 'undefined');
-
-    return (
-        <SeatWebSocketProvider schedulingId={schedulingId}>
-            <BusSeat
-                busData={busData}
-                routeData={routeData}
-                seatData={seatData}
-                price={price}
-                schedulingId={schedulingId}
-                etd={etd}
-                eta={eta}
-                distance={distance}
-                estimatedDuration={estimatedDuration}
-            />
-        </SeatWebSocketProvider>
-    );
+  return (
+    <SeatWebSocketProvider schedulingId={schedulingId}>
+      <BusSeat
+        busData={busData}
+        routeData={routeData}
+        seatData={seatData}
+        price={price}
+        schedulingId={schedulingId}
+        etd={etd}
+        eta={eta}
+        distance={distance}
+        estimatedDuration={estimatedDuration}
+      />
+    </SeatWebSocketProvider>
+  );
 }
