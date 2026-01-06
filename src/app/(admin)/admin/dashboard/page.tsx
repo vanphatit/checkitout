@@ -301,12 +301,12 @@ export default function AdminDashboardPage() {
                                         const stations = route.routeName
                                             .replace(/Trạm\s+/g, '')
                                             .split(/\s+-\s+/);
-                                        const shortName = stations.map(station => 
+                                        const shortName = stations.map(station =>
                                             station.split(' ')
                                                 .map(word => word.charAt(0).toUpperCase())
                                                 .join('')
                                         ).join('→');
-                                        
+
                                         return {
                                             ...route,
                                             shortName,
