@@ -121,10 +121,14 @@ export const useSeatWebSocket = ({
             console.log("🔓 Seat unlocked:", event);
             setLockedSeats((prev) => {
                 const { [event.seatId]: removed, ...rest } = prev;
-                console.log("🗺️ Seat removed from locked list:", event.seatId);
+                console.log("🗺️ Seat removed from locked list:", event.seatId, "Remaining locks:", Object.keys(rest));
                 return rest;
             });
-            setUpdateTrigger(prev => prev + 1);
+            setUpdateTrigger(prev => {
+                const newVal = prev + 1;
+                console.log("🔄 UpdateTrigger incremented:", prev, "→", newVal);
+                return newVal;
+            });
             onSeatUnlocked?.(event);
         });
 

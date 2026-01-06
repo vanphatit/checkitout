@@ -15,16 +15,6 @@ export function SeatItem({
   const isLockedByOthers = seat.isLockedByOthers || false;
   const isLockedByMe = seat.isLockedByMe || false;
 
-  // Debug log
-  if (seat.seatNo === "A7" || seat.seatNo === "A3") {
-    console.log(`🔄 [${seat.seatNo}] Rendering:`, {
-      isLockedByOthers,
-      isLockedByMe,
-      isSelected,
-      isSold,
-    });
-  }
-
   return (
     <button
       disabled={isSold || isLockedByOthers}
@@ -45,9 +35,11 @@ export function SeatItem({
           ? "text-neutral-400"
           : isLockedByOthers
             ? "!text-orange-400 !opacity-60"
-            : isSelected || isLockedByMe
-              ? "text-red-500"
-              : "text-primary"
+            : isSelected
+              ? "!text-orange-500"
+              : isLockedByMe
+                ? "!text-red-500"
+                : "text-primary"
           }`}
       />
       <span className="text-xs">{seat.seatNo}</span>
