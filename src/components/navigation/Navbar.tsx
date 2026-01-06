@@ -194,7 +194,7 @@ const Navbar: React.FC = () => {
                   Login
                 </Link>
                 <Link
-                  href="/signup"
+                  href="/register"
                   className="rounded-md border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-transparent hover:text-primary dark:text-primary dark:bg-white dark:hover:bg-transparent dark:hover:text-white dark:border-primary"
                   onClick={() => setOpen(false)}
                 >

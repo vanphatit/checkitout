@@ -21,6 +21,8 @@ interface BusSeatWrapperProps {
   eta?: string;
   distance?: number;
   estimatedDuration?: number;
+  arrivalDate: string;
+  departureDate: string;
 }
 
 export default function BusSeatWrapper(props: BusSeatWrapperProps) {

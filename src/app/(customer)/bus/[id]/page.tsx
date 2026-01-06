@@ -20,6 +20,8 @@ export default async function BusTicketCheckIn({
   const price = data.price;
   const driverName = data.driver?.name || "N/A";
   const busPlate = busData.plateNo || "N/A";
+  const arrivalDate = data.arrivalDate;
+  const departureDate = data.departureDate;
   const warningMessage = (
     <>
       Mỗi khách chỉ được đặt một chỗ ngồi. Nếu bạn gặp vấn đề khi đặt chỗ, vui
@@ -54,6 +56,8 @@ export default async function BusTicketCheckIn({
             eta={data.eta}
             distance={routeData.distance}
             estimatedDuration={routeData.estimatedDuration}
+            arrivalDate={arrivalDate}
+            departureDate={departureDate}
           />
         </div>
 
