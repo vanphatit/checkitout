@@ -1,8 +1,10 @@
 import { useAppSelector, useAppDispatch } from "./redux";
-import { logout, clearError } from "@/store/slices";
+import { clearError, logoutUser } from "@/store/slices";
+import { useRouter } from "next/navigation";
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const {
     user,
     isAuthenticated,
@@ -12,8 +14,9 @@ export const useAuth = () => {
     isInitialized,
   } = useAppSelector((state) => state.auth);
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
+    router.push("/login");
   };
 
   const handleClearError = () => {

@@ -8,6 +8,7 @@ export default async function Page({
     status?: string;
     period?: string;
     paymentMethod?: string;
+    search?: string;
   }>;
 }) {
   const sParams = await searchParams;
@@ -15,9 +16,10 @@ export default async function Page({
   return (
     <TicketManagementClient
       page={Number(sParams.page ?? 1)}
-      status={sParams.status ?? "SUCCESS"}
-      period={sParams.period ?? "allTime"}
+      status={sParams.status ?? ""}
+      period={sParams.period ?? ""}
       paymentMethod={sParams.paymentMethod ?? ""}
+      search={sParams.search ?? ""}
     />
   );
 }

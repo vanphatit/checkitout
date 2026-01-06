@@ -92,14 +92,15 @@ export default function CreateTicketPage() {
     try {
       const user = await userService.searchUserByEmailOrPhone(customerSearch);
       if (user) {
-        // Found existing user
+        // Found existing user - show info, DON'T auto-load seats
         setSelectedCustomer(user);
         setShowCreateCustomer(false);
-        loadSeats();
+        // Don't auto-load seats here - user needs to click "Continue" button
       } else {
         // User not found - show form to collect name info
         // Will auto-create user when ticket is created
         setShowCreateCustomer(true);
+        setSelectedCustomer(null);
         // Pre-fill phone number
         setNewCustomer({ 
           firstName: "",
@@ -348,12 +349,25 @@ export default function CreateTicketPage() {
         {/* Step 2: Search/Create Customer */}
         {currentStep === "search-customer" && !showCreateCustomer && (
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
-            <h2 className="text-2xl font-black text-slate-900 mb-6">
-              Tìm kiếm khách hàng
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-black text-slate-900">
+                Tìm kiếm khách hàng
+              </h2>
+              <button
+                onClick={() => {
+                  setCurrentStep("search-scheduling");
+                  setSelectedCustomer(null);
+                  setCustomerSearch("");
+                }}
+                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200 transition-all flex items-center gap-2"
+              >
+                <FiArrowLeft />
+                Quay lại
+              </button>
+            </div>
             <div className="mb-6">
               <label className="block text-sm font-bold text-slate-700 mb-2">
-                Số điện thoại khách hàng
+                Số điện thoại khách hàng <span className="text-rose-500">*</span>
               </label>
               <input
                 type="tel"
@@ -361,7 +375,7 @@ export default function CreateTicketPage() {
                 onChange={(e) => setCustomerSearch(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearchCustomer()}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nhập số điện thoại (VD: 0828121288)"
+                placeholder="Nhập số điện thoại (VD: 0919121299)"
               />
             </div>
             <button
@@ -383,25 +397,55 @@ export default function CreateTicketPage() {
             </button>
 
             {selectedCustomer && (
-              <div className="mt-8 bg-emerald-50 border border-emerald-200 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <FiCheckCircle className="w-6 h-6 text-emerald-600" />
+              <div className="mt-8">
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <FiCheckCircle className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-bold text-blue-900">
+                      Người dùng đã tồn tại trong hệ thống
+                    </h3>
                   </div>
-                  <h3 className="text-lg font-bold text-emerald-900">
-                    Đã tìm thấy khách hàng
-                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-blue-600 font-semibold mb-1">Họ tên</p>
+                      <p className="text-base font-bold text-blue-900">
+                        {selectedCustomer.firstName} {selectedCustomer.lastName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-600 font-semibold mb-1">Số điện thoại</p>
+                      <p className="text-base font-bold text-blue-900">
+                        {selectedCustomer.phone}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-600 font-semibold mb-1">Email</p>
+                      <p className="text-base font-bold text-blue-900">
+                        {selectedCustomer.email || <span className="text-slate-400 italic">Chưa có</span>}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm text-emerald-700">
-                    <span className="font-bold">Họ tên:</span> {selectedCustomer.firstName} {selectedCustomer.lastName}
-                  </p>
-                  <p className="text-sm text-emerald-700">
-                    <span className="font-bold">Email:</span> {selectedCustomer.email}
-                  </p>
-                  <p className="text-sm text-emerald-700">
-                    <span className="font-bold">Số điện thoại:</span> {selectedCustomer.phone}
-                  </p>
+                
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => {
+                      setSelectedCustomer(null);
+                      setCustomerSearch("");
+                    }}
+                    className="px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
+                  >
+                    <FiArrowLeft />
+                    Tìm lại
+                  </button>
+                  <button
+                    onClick={loadSeats}
+                    className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                  >
+                    Tiếp tục chọn ghế
+                  </button>
                 </div>
               </div>
             )}
@@ -411,12 +455,26 @@ export default function CreateTicketPage() {
         {/* Create Customer Form */}
         {currentStep === "search-customer" && showCreateCustomer && (
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
-            <h2 className="text-2xl font-black text-slate-900 mb-6">
-              Khách hàng chưa có trong hệ thống
-            </h2>
-            <p className="text-sm text-slate-600 mb-6">
-              Vui lòng nhập thông tin khách hàng. Hệ thống sẽ tự động tạo tài khoản khi đặt vé.
-            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-black text-amber-900">
+                  ℹ️ Khách hàng chưa có trong hệ thống
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowCreateCustomer(false);
+                    setCustomerSearch("");
+                  }}
+                  className="px-3 py-1.5 bg-white text-amber-700 rounded-lg font-semibold hover:bg-amber-100 transition-all flex items-center gap-1 text-sm border border-amber-300"
+                >
+                  <FiArrowLeft className="w-4 h-4" />
+                  Tìm lại
+                </button>
+              </div>
+              <p className="text-sm text-amber-700">
+                Vui lòng nhập thông tin khách hàng. Hệ thống sẽ tự động tạo tài khoản khi đặt vé.
+              </p>
+            </div>
             <div className="grid grid-cols-1 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">
@@ -498,9 +556,22 @@ export default function CreateTicketPage() {
               </div>
             ) : selectedScheduling && selectedScheduling.busIds?.[0] ? (
               <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
-                <h2 className="text-2xl font-black text-slate-900 mb-6">
-                  Chọn ghế
-                </h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-black text-slate-900">
+                    Chọn ghế
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setCurrentStep("search-customer");
+                      setSeats([]);
+                      setSelectedSeat(null);
+                    }}
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200 transition-all flex items-center gap-2"
+                  >
+                    <FiArrowLeft />
+                    Quay lại
+                  </button>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-10">
                   {/* LEFT – SEAT AREA */}
                   <div className="col-span-1 md:col-span-3 w-full flex flex-col items-stretch shadow-sm rounded-xl p-3 border border-neutral-200 space-y-6">
@@ -591,9 +662,20 @@ export default function CreateTicketPage() {
         {/* Step 4: Confirm */}
         {currentStep === "confirm" && !createdTicket && (
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
-            <h2 className="text-2xl font-black text-slate-900 mb-6">
-              Xác nhận thông tin
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-black text-slate-900">
+                Xác nhận thông tin
+              </h2>
+              <button
+                onClick={() => {
+                  setCurrentStep("select-seat");
+                }}
+                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200 transition-all flex items-center gap-2"
+              >
+                <FiArrowLeft />
+                Quay lại
+              </button>
+            </div>
             <div className="space-y-6 mb-8">
               <div className="bg-slate-50 rounded-xl p-5">
                 <h3 className="font-bold text-slate-900 mb-3">Chuyến đi</h3>

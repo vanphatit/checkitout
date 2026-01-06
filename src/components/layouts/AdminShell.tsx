@@ -22,20 +22,36 @@ type AdminShellProps = {
 };
 
 export function AdminShell({ children }: AdminShellProps) {
-  const { user, isAuthenticated, isCheckingAuth, isInitialized, logout } = useAuth();
+  const { user, isAuthenticated, isCheckingAuth, isInitialized, logout } =
+    useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const isResolvingAuth = isCheckingAuth || !isInitialized;
 
   const navItems = useMemo(
     () => [
-      { href: "/admin/users", label: "Người dùng", icon: Users, roles: ["ADMIN"] },
-      { href: "/admin/stations", label: "Trạm xe", icon: Route, roles: ["ADMIN"] },
-      { href: "/admin/routes", label: "Tuyến đường", icon: Route, roles: ["ADMIN"] },
-      { href: "/admin/scheduling", label: "Chuyến xe", icon: Route, roles: ["ADMIN"] },
+      {
+        href: "/admin/users",
+        label: "Người dùng",
+        icon: Users,
+        roles: ["ADMIN"],
+      },
+      { href: "/admin/stations", label: "Trạm", icon: Route, roles: ["ADMIN"] },
+      { href: "/admin/routes", label: "Tuyến", icon: Route, roles: ["ADMIN"] },
+      {
+        href: "/admin/scheduling",
+        label: "Chuyến",
+        icon: Route,
+        roles: ["ADMIN"],
+      },
       { href: "/admin/tickets", label: "Vé", icon: Ticket, roles: ["ADMIN"] },
       { href: "/admin/buses", label: "Xe", icon: BusFront, roles: ["ADMIN"] },
-      { href: "/admin/promotions", label: "Khuyến mãi", icon: BadgePercent, roles: ["ADMIN"] },
+      {
+        href: "/admin/promotion",
+        label: "Khuyến mãi",
+        icon: BadgePercent,
+        roles: ["ADMIN"],
+      },
     ],
     []
   );
@@ -82,21 +98,24 @@ export function AdminShell({ children }: AdminShellProps) {
             </div>
             <nav className="flex items-center gap-1 sm:gap-2">
               {availableNav.map(({ href, label, icon: Icon }) => {
-                const active = pathname === href || pathname?.startsWith(`${href}/`);
+                const active =
+                  pathname === href || pathname?.startsWith(`${href}/`);
                 return (
                   <Link
                     key={href}
                     href={href}
                     aria-label={label}
                     title={label}
-                    className={`group flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${active
-                      ? "bg-white text-black shadow-sm"
-                      : "bg-white/10 text-gray-100 hover:bg-white/20"
-                      }`}
+                    className={`group flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
+                      active
+                        ? "bg-white text-black shadow-sm"
+                        : "bg-white/10 text-gray-100 hover:bg-white/20"
+                    }`}
                   >
                     <Icon
-                      className={`h-4 w-4 ${active ? "text-black" : "text-gray-200"
-                        }`}
+                      className={`h-4 w-4 ${
+                        active ? "text-black" : "text-gray-200"
+                      }`}
                     />
                     <span className="sr-only md:hidden">{label}</span>
                     <span className="hidden md:inline">{label}</span>
@@ -120,7 +139,6 @@ export function AdminShell({ children }: AdminShellProps) {
                 onClick={logout}
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                Logout
               </Button>
             </div>
           </div>

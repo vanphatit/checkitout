@@ -2,7 +2,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ticketService } from "@/services/ticketService";
-import { Ticket } from "@/types/ticket";
+import { schedulingService } from "@/services/schedulingService";
+import { seatService } from "@/services/seatService";
+import { Ticket, TicketStatus } from "@/types/ticket";
+import { Scheduling } from "@/types/scheduling";
+import { Seat } from "@/types/seat";
 import {
   FiLoader,
   FiArrowLeft,
@@ -19,6 +23,7 @@ import {
   FiDownload,
 } from "react-icons/fi";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function AdminTicketDetailPage() {
   const params = useParams();
@@ -29,6 +34,8 @@ export default function AdminTicketDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   // Transfer modal state
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -37,6 +44,14 @@ export default function AdminTicketDetailPage() {
     newSeatId: "",
     reason: "",
   });
+  
+  // Transfer modal dropdown data - NO ROUTE SELECTION (must be same route)
+  const [currentRouteId, setCurrentRouteId] = useState<string>("");
+  const [schedulings, setSchedulings] = useState<Scheduling[]>([]);
+  const [selectedSchedulingId, setSelectedSchedulingId] = useState<string>("");
+  const [seats, setSeats] = useState<Seat[]>([]);
+  const [loadingSchedulings, setLoadingSchedulings] = useState(false);
+  const [loadingSeats, setLoadingSeats] = useState(false);
 
   // Cancel modal state
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -46,17 +61,120 @@ export default function AdminTicketDetailPage() {
   const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"BANKING" | "CASH">("BANKING");
 
+  // Check if ticket can be transferred (must be at least 3 hours before departure)
+  const canTransfer = (): boolean => {
+    if (!ticket || ticket.status !== TicketStatus.SUCCESS) return false;
+    
+    const departureDate = ticket.snapshot?.scheduling?.departureDate;
+    if (!departureDate) return false;
+    
+    const now = new Date();
+    const departure = new Date(departureDate);
+    const hoursUntilDeparture = (departure.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    return hoursUntilDeparture >= 3;
+  };
+
   useEffect(() => {
     if (!ticketId) return;
     loadTicket();
+    
+    // Cleanup QR code URL on unmount
+    return () => {
+      if (qrCodeUrl) {
+        URL.revokeObjectURL(qrCodeUrl);
+      }
+    };
   }, [ticketId]);
+
+  // Load schedulings of same route when transfer modal opens
+  useEffect(() => {
+    if (showTransferModal && ticket) {
+      // Get routeId from snapshot (most reliable source)
+      const routeId = ticket.snapshot?.route?.routeId;
+      
+      if (routeId) {
+        setCurrentRouteId(routeId);
+        setLoadingSchedulings(true);
+        schedulingService
+          .getSchedulingsByRoute(routeId)
+          .then((allSchedulings) => {
+            // Filter out the current scheduling and only show available ones with same price
+            const currentSchedulingId = typeof ticket.schedulingId === 'string' 
+              ? ticket.schedulingId 
+              : ticket.schedulingId._id;
+            
+            // Get current ticket price from snapshot
+            const currentPrice = ticket.snapshot?.scheduling?.price;
+            
+            const availableSchedulings = allSchedulings.filter(
+              s => s._id !== currentSchedulingId && 
+                   s.availableSeats > 0 &&
+                   (!currentPrice || s.price === currentPrice)  // Must have same price
+            );
+            setSchedulings(availableSchedulings);
+          })
+          .catch(console.error)
+          .finally(() => setLoadingSchedulings(false));
+      }
+    } else {
+      // Reset when modal closes
+      setCurrentRouteId("");
+      setSchedulings([]);
+      setSelectedSchedulingId("");
+      setSeats([]);
+    }
+  }, [showTransferModal, ticket]);
+
+  // Load seats when scheduling is selected
+  useEffect(() => {
+    if (selectedSchedulingId) {
+      const selectedScheduling = schedulings.find(s => s._id === selectedSchedulingId);
+      if (selectedScheduling && selectedScheduling.busIds && selectedScheduling.busIds.length > 0) {
+        setLoadingSeats(true);
+        // Get first bus from busIds array
+        const firstBus = selectedScheduling.busIds[0];
+        const busId = typeof firstBus === 'string' 
+          ? firstBus 
+          : firstBus._id;
+        
+        seatService
+          .getSeatsByBusId(busId)
+          .then((allSeats) => {
+            // Filter only EMPTY seats
+            const availableSeats = allSeats.filter(seat => seat.status === 'EMPTY');
+            setSeats(availableSeats);
+          })
+          .catch(console.error)
+          .finally(() => setLoadingSeats(false));
+      }
+      // Update transfer data
+      setTransferData(prev => ({
+        ...prev,
+        newSchedulingId: selectedSchedulingId
+      }));
+    } else {
+      setSeats([]);
+    }
+  }, [selectedSchedulingId, schedulings]);
 
   const loadTicket = () => {
     setLoading(true);
     ticketService
       .getTicketById(ticketId)
-      .then((data) => {
+      .then(async (data) => {
         setTicket(data);
+        
+        // Load QR code if ticket is successful
+        if (data.status === "SUCCESS") {
+          try {
+            const qrBlob = await ticketService.generateQRCode(data._id);
+            const qrUrl = URL.createObjectURL(qrBlob);
+            setQrCodeUrl(qrUrl);
+          } catch (qrError) {
+            console.error("Error loading QR code:", qrError);
+          }
+        }
       })
       .catch((err) => {
         console.error("Error fetching ticket:", err);
@@ -125,25 +243,25 @@ export default function AdminTicketDetailPage() {
     }
   };
 
-  const handleDownloadQR = async () => {
+  const handleDownloadPDF = async () => {
     if (!ticket?._id) return;
 
-    setActionLoading(true);
+    setDownloadingPDF(true);
     try {
-      const blob = await ticketService.generateQRCode(ticket._id);
+      const blob = await ticketService.downloadTicketPDF(ticket._id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `ticket-${ticket._id}-qrcode.png`;
+      a.download = `ticket-${ticket._id}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (err: any) {
-      console.error("QR download error:", err);
-      alert(err.response?.data?.message || "Không thể tải QR code");
+      console.error("PDF download error:", err);
+      alert(err.response?.data?.message || "Không thể tải vé PDF");
     } finally {
-      setActionLoading(false);
+      setDownloadingPDF(false);
     }
   };
 
@@ -216,18 +334,33 @@ export default function AdminTicketDetailPage() {
     }
   };
 
-  const getStatusGradient = () => {
+  const getStatusBgColor = () => {
     switch (ticket.status) {
       case "SUCCESS":
-        return "from-emerald-500 to-emerald-600";
+        return "bg-emerald-50 border border-emerald-200";
       case "PENDING":
-        return "from-amber-500 to-amber-600";
+        return "bg-amber-50 border border-amber-200";
       case "FAILED":
-        return "from-rose-500 to-rose-600";
+        return "bg-rose-50 border border-rose-200";
       case "TRANSFER":
-        return "from-blue-500 to-blue-600";
+        return "bg-blue-50 border border-blue-200";
       default:
-        return "from-slate-500 to-slate-600";
+        return "bg-neutral-50 border border-neutral-200";
+    }
+  };
+
+  const getStatusTextColor = () => {
+    switch (ticket.status) {
+      case "SUCCESS":
+        return "text-emerald-900";
+      case "PENDING":
+        return "text-amber-900";
+      case "FAILED":
+        return "text-rose-900";
+      case "TRANSFER":
+        return "text-blue-900";
+      default:
+        return "text-neutral-900";
     }
   };
 
@@ -247,7 +380,7 @@ export default function AdminTicketDetailPage() {
             >
               <FiArrowLeft /> Quay lại danh sách vé
             </Link>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-3xl font-bold text-neutral-900">
               Chi tiết vé
             </h1>
           </div>
@@ -261,32 +394,32 @@ export default function AdminTicketDetailPage() {
 
         {/* Status Banner with Actions */}
         <div
-          className={`bg-gradient-to-r ${getStatusGradient()} rounded-3xl p-8 text-white mb-8 shadow-lg`}
+          className={`${getStatusBgColor()} rounded-xl p-8 mb-8 shadow-sm`}
         >
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+              <div className="w-16 h-16 bg-white rounded-xl shadow-sm flex items-center justify-center">
                 {getStatusIcon()}
               </div>
               <div>
-                <p className="text-sm font-bold uppercase tracking-wider opacity-90">
+                <p className={`text-xs font-semibold uppercase tracking-wider ${getStatusTextColor()} opacity-70`}>
                   Trạng thái vé
                 </p>
-                <h2 className="text-3xl font-black mt-1">{getStatusText()}</h2>
+                <h2 className={`text-2xl font-bold mt-1 ${getStatusTextColor()}`}>{getStatusText()}</h2>
               </div>
             </div>
             {isPending && (
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowConfirmPaymentModal(true)}
-                  className="px-5 py-2.5 bg-white text-emerald-600 rounded-xl font-bold hover:bg-emerald-50 transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all flex items-center gap-2 shadow-sm"
                 >
                   <FiCheckCircle />
                   Xác nhận thanh toán
                 </button>
                 <button
                   onClick={() => setShowCancelModal(true)}
-                  className="px-5 py-2.5 bg-white/20 border-2 border-white text-white rounded-xl font-bold hover:bg-white/30 transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 bg-white border border-neutral-300 text-neutral-700 rounded-lg font-semibold hover:bg-neutral-50 transition-all flex items-center gap-2"
                 >
                   <FiXCircle />
                   Hủy vé
@@ -295,20 +428,29 @@ export default function AdminTicketDetailPage() {
             )}
             {isSuccess && (
               <div className="flex items-center gap-3">
+                <div className="relative group">
+                  <button
+                    onClick={() => setShowTransferModal(true)}
+                    disabled={!canTransfer()}
+                    className="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-sm disabled:bg-slate-400 disabled:cursor-not-allowed disabled:hover:bg-slate-400"
+                  >
+                    <FiTrendingUp />
+                    Chuyển vé
+                  </button>
+                  {!canTransfer() && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-lg z-10">
+                      Vé sắp khởi hành, không thể chuyển vé
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                    </div>
+                  )}
+                </div>
                 <button
-                  onClick={() => setShowTransferModal(true)}
-                  className="px-5 py-2.5 bg-white text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition-all flex items-center gap-2"
-                >
-                  <FiTrendingUp />
-                  Chuyển vé
-                </button>
-                <button
-                  onClick={handleDownloadQR}
-                  disabled={actionLoading}
-                  className="px-5 py-2.5 bg-white/20 border-2 border-white text-white rounded-xl font-bold hover:bg-white/30 transition-all flex items-center gap-2 disabled:opacity-50"
+                  onClick={handleDownloadPDF}
+                  disabled={downloadingPDF}
+                  className="px-5 py-2.5 bg-white border border-neutral-300 text-neutral-700 rounded-lg font-semibold hover:bg-neutral-50 transition-all flex items-center gap-2 disabled:opacity-50"
                 >
                   <FiDownload />
-                  {actionLoading ? "Đang tải..." : "QR Code"}
+                  {downloadingPDF ? "Đang tải..." : "Tải vé PDF"}
                 </button>
               </div>
             )}
@@ -491,43 +633,89 @@ export default function AdminTicketDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* QR Code - Only show for SUCCESS tickets */}
+          {ticket.status === "SUCCESS" && qrCodeUrl && (
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                  <FiDownload className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900">
+                  Mã QR vé
+                </h3>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                  <Image
+                    src={qrCodeUrl}
+                    alt="QR Code"
+                    width={200}
+                    height={200}
+                    className="w-48 h-48"
+                  />
+                </div>
+                <p className="text-sm text-slate-500 mt-4 text-center">
+                  Mã QR để kiểm tra vé
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Transfer Modal */}
       {showTransferModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl my-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
                 <FiTrendingUp className="w-6 h-6 text-blue-600" />
               </div>
               <h3 className="text-2xl font-black text-slate-900">Chuyển vé</h3>
             </div>
+
+            {/* Info about same route and price requirement */}
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Lưu ý:</strong> Chỉ có thể chuyển vé sang chuyến đi khác trên cùng tuyến đường và cùng mức giá ({ticket.snapshot?.scheduling?.price?.toLocaleString('vi-VN') || '0'} VNĐ).
+              </p>
+            </div>
+
             <div className="space-y-4 mb-6">
+              {/* Scheduling Selection - Same Route and Price Only */}
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">
-                  ID Chuyến đi mới <span className="text-rose-500">*</span>
+                  Chọn chuyến đi mới (cùng tuyến, cùng giá) <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={transferData.newSchedulingId}
-                  onChange={(e) =>
-                    setTransferData({
-                      ...transferData,
-                      newSchedulingId: e.target.value,
-                    })
-                  }
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nhập ID chuyến đi mới"
-                />
+                <select
+                  value={selectedSchedulingId}
+                  onChange={(e) => setSelectedSchedulingId(e.target.value)}
+                  disabled={loadingSchedulings}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {loadingSchedulings 
+                      ? "Đang tải..." 
+                      : schedulings.length === 0 
+                      ? "Không có chuyến đi nào phù hợp (cùng tuyến và cùng giá)" 
+                      : "-- Chọn chuyến đi --"}
+                  </option>
+                  {schedulings.map((scheduling) => (
+                    <option key={scheduling._id} value={scheduling._id}>
+                      {new Date(scheduling.departureDate).toLocaleDateString('vi-VN')} - {scheduling.etd} 
+                      ({scheduling.availableSeats} ghế trống)
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {/* Seat Selection */}
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">
-                  ID Ghế mới <span className="text-rose-500">*</span>
+                  Chọn ghế <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={transferData.newSeatId}
                   onChange={(e) =>
                     setTransferData({
@@ -535,10 +723,25 @@ export default function AdminTicketDetailPage() {
                       newSeatId: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nhập ID ghế mới"
-                />
+                  disabled={!selectedSchedulingId || loadingSeats}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {loadingSeats 
+                      ? "Đang tải ghế..." 
+                      : seats.length === 0 
+                      ? "Không có ghế trống" 
+                      : "-- Chọn ghế --"}
+                  </option>
+                  {seats.map((seat) => (
+                    <option key={seat._id} value={seat._id}>
+                      Ghế {seat.seatNo}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {/* Reason */}
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">
                   Lý do (tùy chọn)

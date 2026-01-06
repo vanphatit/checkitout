@@ -5,15 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Activity as ActivityIcon,
-  AlertTriangle,
   Clock3,
   Loader2,
-  Mail,
   MapPin,
   MonitorSmartphone,
-  Phone,
   RefreshCw,
   ShieldCheck,
+  User as UserIcon,
 } from "lucide-react";
 
 import { useAuth, useAppDispatch } from "@/hooks";
@@ -27,6 +25,7 @@ import {
   changePasswordSchema,
   type ChangePasswordFormData,
 } from "@/lib/validations";
+import { getErrorMessage } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -44,6 +43,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
 
 const statusStyles: Record<User["status"], string> = {
   ACTIVE: "bg-green-100 text-green-700 border border-green-200",
@@ -63,15 +64,14 @@ const formatDate = (value?: string | null) => {
 export default function ProfilePage() {
   const { user, isCheckingAuth } = useAuth();
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<User | null>(user);
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [profileLoading, setProfileLoading] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
-  const [profileMessage, setProfileMessage] = useState<string | null>(null);
-  const [profileError, setProfileError] = useState<string | null>(null);
-  const [securityMessage, setSecurityMessage] = useState<string | null>(null);
-  const [securityError, setSecurityError] = useState<string | null>(null);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -97,7 +97,6 @@ export default function ProfilePage() {
 
     const fetchProfile = async () => {
       setProfileLoading(true);
-      setProfileError(null);
       try {
         const data = await userService.getMyProfile();
         if (!isMounted) return;
@@ -108,13 +107,16 @@ export default function ProfilePage() {
           phone: data.phone ?? "",
         });
         dispatch(setUser(data));
-      } catch (error) {
+      } catch (error: unknown) {
         if (!isMounted) return;
-        setProfileError(
-          error instanceof Error
-            ? error.message
-            : "Unable to load profile information"
-        );
+        toast({
+          variant: "destructive",
+          title: "Error Loading Profile",
+          description: getErrorMessage(
+            error,
+            "Unable to load profile information"
+          ),
+        });
       } finally {
         if (isMounted) {
           setProfileLoading(false);
@@ -167,6 +169,7 @@ export default function ProfilePage() {
       profile.lastName,
       profile.email,
       profile.phone,
+      profile.avatarUrl,
     ];
     const filled = fieldsToCheck.filter(
       (value) => value && value !== ""
@@ -175,8 +178,6 @@ export default function ProfilePage() {
   }, [profile]);
 
   const onProfileSubmit = async (data: ProfileFormData) => {
-    setProfileMessage(null);
-    setProfileError(null);
     try {
       setProfileLoading(true);
       const updated = await userService.updateMyProfile({
@@ -186,37 +187,89 @@ export default function ProfilePage() {
       });
       setProfile(updated);
       dispatch(setUser(updated));
-      setProfileMessage("Profile updated successfully");
-    } catch (error) {
-      setProfileError(
-        error instanceof Error
-          ? error.message
-          : "Unable to update profile at the moment"
-      );
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    } catch (error: unknown) {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: getErrorMessage(
+          error,
+          "Unable to update profile at the moment"
+        ),
+      });
     } finally {
       setProfileLoading(false);
     }
   };
 
   const onPasswordSubmit = async (data: ChangePasswordFormData) => {
-    setSecurityMessage(null);
-    setSecurityError(null);
     try {
       setIsUpdatingPassword(true);
       const message = await userService.changePassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
-      setSecurityMessage(message);
+      toast({
+        title: "Success",
+        description: message,
+      });
       passwordForm.reset();
-    } catch (error) {
-      setSecurityError(
-        error instanceof Error
-          ? error.message
-          : "Unable to update password right now"
-      );
+    } catch (error: unknown) {
+      toast({
+        variant: "destructive",
+        title: "Password Update Failed",
+        description: getErrorMessage(
+          error,
+          "Unable to update password right now"
+        ),
+      });
     } finally {
       setIsUpdatingPassword(false);
+    }
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      setIsUploadingAvatar(true);
+      const updatedUser = await userService.uploadAvatar(file);
+      setProfile(updatedUser);
+      dispatch(setUser(updatedUser));
+      toast({
+        title: "Success",
+        description: "Avatar uploaded successfully",
+      });
+    } catch (error: unknown) {
+      toast({
+        variant: "destructive",
+        title: "Upload Failed",
+        description: getErrorMessage(error, "Failed to upload avatar"),
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    try {
+      setIsDeletingAvatar(true);
+      const updatedUser = await userService.deleteAvatar();
+      setProfile(updatedUser);
+      dispatch(setUser(updatedUser));
+      toast({
+        title: "Success",
+        description: "Avatar removed successfully",
+      });
+    } catch (error: unknown) {
+      toast({
+        variant: "destructive",
+        title: "Delete Failed",
+        description: getErrorMessage(error, "Failed to delete avatar"),
+      });
+    } finally {
+      setIsDeletingAvatar(false);
     }
   };
 
@@ -230,47 +283,100 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-wide text-muted-foreground">
-            Account Center
-          </p>
-          <h1 className="text-3xl font-semibold text-gray-900">
-            Welcome back,{" "}
-            {profile ? `${profile.firstName} ${profile.lastName}` : "Profile"} !
-          </h1>
-          <p className="text-gray-500">
-            Manage your personal information, security preferences, and account
-            activity in one place.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              profile
-                ? statusStyles[profile.status]
-                : "bg-gray-100 text-gray-600"
-            }`}
-          >
-            {profile?.status ?? "Unknown"}
-          </span>
-          <div className="rounded-full border border-gray-200 px-4 py-1 text-xs font-semibold text-gray-700">
-            {profile?.role ?? "USER"}
+      {/* Header Section */}
+      <div className="rounded-lg border bg-gradient-to-br from-primary/5 via-primary/10 to-secondary/20 p-8">
+        <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start">
+          {/* Avatar Section */}
+          <div className="flex-shrink-0">
+            <AvatarUpload
+              avatarUrl={profile?.avatarUrl}
+              userName={
+                profile ? `${profile.firstName} ${profile.lastName}` : "User"
+              }
+              onUpload={handleAvatarUpload}
+              onDelete={handleAvatarDelete}
+              isUploading={isUploadingAvatar}
+              isDeleting={isDeletingAvatar}
+            />
+          </div>
+
+          {/* User Info Section */}
+          <div className="flex-1 text-center lg:text-left">
+            <div className="mb-2 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  profile
+                    ? statusStyles[profile.status]
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {profile?.status ?? "Unknown"}
+              </span>
+              <div className="rounded-full border border-gray-200 px-4 py-1 text-xs font-semibold text-gray-700">
+                {profile?.role ?? "USER"}
+              </div>
+            </div>
+
+            <h1 className="text-3xl font-bold text-gray-900">
+              {profile ? `${profile.firstName} ${profile.lastName}` : "Profile"}
+            </h1>
+
+            <p className="mt-2 text-sm text-muted-foreground">
+              {profile?.email}
+            </p>
+
+            {/* Quick Stats */}
+            <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <div className="rounded-lg border bg-white p-3 text-center shadow-sm">
+                <p className="text-xs text-muted-foreground">Member Since</p>
+                <p className="mt-1 text-sm font-semibold">
+                  {profile?.createdAt
+                    ? new Date(profile.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "—"}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-white p-3 text-center shadow-sm">
+                <p className="text-xs text-muted-foreground">Last Login</p>
+                <p className="mt-1 text-sm font-semibold">
+                  {profile?.lastLoginAt
+                    ? new Date(profile.lastLoginAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                        }
+                      )
+                    : "—"}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-white p-3 text-center shadow-sm">
+                <p className="text-xs text-muted-foreground">Email Status</p>
+                <p className="mt-1 text-sm font-semibold">
+                  {profile?.emailVerifiedAt ? "Verified" : "Pending"}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-white p-3 text-center shadow-sm">
+                <p className="text-xs text-muted-foreground">Phone</p>
+                <p className="mt-1 text-sm font-semibold">
+                  {profile?.phone ?? "Not set"}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {profileError && (
-        <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-          <AlertTriangle className="h-4 w-4" />
-          <span>{profileError}</span>
-        </div>
-      )}
-
+      {/* Forms Section */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <UserIcon className="h-5 w-5 text-primary" />
+              Personal Information
+            </CardTitle>
             <CardDescription>
               Keep your personal details up to date for smoother experiences.
             </CardDescription>
@@ -349,18 +455,17 @@ export default function ProfilePage() {
                     Save changes
                   </Button>
                 </div>
-                {profileMessage && (
-                  <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-                    {profileMessage}
-                  </div>
-                )}
               </form>
             </Form>
           </CardContent>
         </Card>
+
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Security Controls</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Security Controls
+            </CardTitle>
             <CardDescription>
               Update your password regularly to keep your account secured.
             </CardDescription>
@@ -440,22 +545,13 @@ export default function ProfilePage() {
                     {isUpdatingPassword ? "Updating..." : "Update password"}
                   </Button>
                 </div>
-                {securityMessage && (
-                  <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-                    {securityMessage}
-                  </div>
-                )}
-                {securityError && (
-                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    {securityError}
-                  </div>
-                )}
               </form>
             </Form>
           </CardContent>
         </Card>
       </div>
 
+      {/* Activity Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, ArrowLeft, Mail, CheckCircle, AtSign } from "lucide-react";
@@ -29,11 +29,24 @@ import {
   type ResendVerificationFormData,
 } from "@/lib/validations";
 import api from "@/lib/axios";
+import { useToast } from "@/hooks/use-toast";
 
 export function ResendVerificationForm() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submittedEmail, setSubmittedEmail] = useState("");
+  const { toast } = useToast();
+
+  // Show toast when error changes
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Failed to Resend",
+        description: error,
+      });
+    }
+  }, [error, toast]);
 
   const form = useForm<ResendVerificationFormData>({
     resolver: zodResolver(resendVerificationSchema),
@@ -49,11 +62,12 @@ export function ResendVerificationForm() {
       setSubmittedEmail(data.email);
       setIsSuccess(true);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to resend verification email");
-      }
+      const errorMessage =
+        (err as any)?.response?.data?.message ||
+        (err instanceof Error
+          ? err.message
+          : "Failed to resend verification email");
+      setError(errorMessage);
     }
   };
 

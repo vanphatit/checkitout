@@ -56,7 +56,9 @@ const normalizeMeta = (
       page: 1,
       limit: fallbackLimit,
       totalPages:
-        fallbackLimit > 0 ? Math.max(1, Math.ceil(fallbackTotal / fallbackLimit)) : 1,
+        fallbackLimit > 0
+          ? Math.max(1, Math.ceil(fallbackTotal / fallbackLimit))
+          : 1,
     };
   }
 
@@ -132,26 +134,21 @@ export const userService = {
   },
 
   async getUsers(filters?: UserFilters): Promise<UsersCollection> {
-    const response = await api.get<
-      MaybeApiResponse<UsersCollection | User[]>
-    >("/users", {
-      params: filters,
-    });
+    const response = await api.get<MaybeApiResponse<UsersCollection | User[]>>(
+      "/users",
+      {
+        params: filters,
+      }
+    );
     return normalizeUsersCollection(response.data);
   },
 
   async createUser(payload: AdminCreateUserPayload): Promise<User> {
-    const response = await api.post<MaybeApiResponse<User>>(
-      "/users",
-      payload
-    );
+    const response = await api.post<MaybeApiResponse<User>>("/users", payload);
     return resolveData<User>(response.data);
   },
 
-  async updateUser(
-    id: string,
-    payload: AdminUpdateUserPayload
-  ): Promise<User> {
+  async updateUser(id: string, payload: AdminUpdateUserPayload): Promise<User> {
     const response = await api.put<MaybeApiResponse<User>>(
       `/users/${id}`,
       payload
@@ -174,6 +171,28 @@ export const userService = {
     return resolveData<UserActivity[]>(response.data);
   },
 
+  async uploadAvatar(file: File): Promise<User> {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const response = await api.post<MaybeApiResponse<User>>(
+      "/users/profile/avatar",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return resolveData<User>(response.data);
+  },
+
+  async deleteAvatar(): Promise<User> {
+    const response = await api.delete<MaybeApiResponse<User>>(
+      "/users/profile/avatar"
+    );
+    return resolveData<User>(response.data);
+  },
+  
   async searchUserByEmailOrPhone(query: string): Promise<User | null> {
     try {
       const response = await api.get<MaybeApiResponse<UsersCollection | User[]>>(
