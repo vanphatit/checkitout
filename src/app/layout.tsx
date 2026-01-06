@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReduxProvider } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/footer/Footer";
 
@@ -35,6 +36,7 @@ export default function RootLayout({
         <ReduxProvider>
           {children}
           <Toaster />
+          <SonnerToaster position="top-right" expand={true} richColors closeButton />
         </ReduxProvider>
       </body>
     </html>

@@ -12,6 +12,8 @@ import { Seat } from "@/types/seat";
 import { BusType } from "@/types/bus";
 import SeatLegend from "@/components/busseat/seat/SeatLegend";
 import SeatGrid from "@/components/busseat/seat/SeatGrid";
+import SeatSelectionWithSocket from "@/components/admin/SeatSelectionWithSocket";
+import { SeatWebSocketProvider, useSeatWebSocketContext } from "@/components/providers/SeatWebSocketProvider";
 import {
   FiArrowLeft,
   FiSearch,
@@ -26,7 +28,7 @@ type Step = "search-scheduling" | "search-customer" | "select-seat" | "confirm";
 
 export default function CreateTicketPage() {
   const router = useRouter();
-  
+
   // Step management
   const [currentStep, setCurrentStep] = useState<Step>("search-scheduling");
 
@@ -102,11 +104,11 @@ export default function CreateTicketPage() {
         setShowCreateCustomer(true);
         setSelectedCustomer(null);
         // Pre-fill phone number
-        setNewCustomer({ 
+        setNewCustomer({
           firstName: "",
-          lastName: "", 
+          lastName: "",
           email: "",
-          phone: customerSearch 
+          phone: customerSearch
         });
       }
     } catch (error: any) {
@@ -135,7 +137,7 @@ export default function CreateTicketPage() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    
+
     setSelectedCustomer(tempUser);
     setShowCreateCustomer(false);
     loadSeats();
@@ -428,7 +430,7 @@ export default function CreateTicketPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-3 mt-4">
                   <button
                     onClick={() => {
@@ -546,117 +548,20 @@ export default function CreateTicketPage() {
         )}
 
         {/* Step 3: Select Seat */}
-        {currentStep === "select-seat" && (
-          <div>
-            {seatsLoading ? (
-              <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
-                <div className="flex justify-center py-10">
-                  <FiLoader className="w-10 h-10 text-blue-500 animate-spin" />
-                </div>
-              </div>
-            ) : selectedScheduling && selectedScheduling.busIds?.[0] ? (
-              <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-black text-slate-900">
-                    Chọn ghế
-                  </h2>
-                  <button
-                    onClick={() => {
-                      setCurrentStep("search-customer");
-                      setSeats([]);
-                      setSelectedSeat(null);
-                    }}
-                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200 transition-all flex items-center gap-2"
-                  >
-                    <FiArrowLeft />
-                    Quay lại
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-10">
-                  {/* LEFT – SEAT AREA */}
-                  <div className="col-span-1 md:col-span-3 w-full flex flex-col items-stretch shadow-sm rounded-xl p-3 border border-neutral-200 space-y-6">
-                    <SeatLegend />
-                    <SeatGrid
-                      type={selectedScheduling.busIds[0].type as BusType}
-                      data={seats}
-                      selectedSeats={selectedSeat ? [selectedSeat.seatNo] : []}
-                      onSeatClick={handleSelectSeat}
-                    />
-                  </div>
-
-                  {/* RIGHT – BOOKING INFO */}
-                  <div className="col-span-1 md:col-span-2 w-full">
-                    <div className="bg-slate-50 rounded-xl p-6 sticky top-6">
-                      <h3 className="text-lg font-black text-slate-900 mb-4">
-                        Thông tin đặt vé
-                      </h3>
-                      
-                      {/* Route Info */}
-                      <div className="mb-4 pb-4 border-b border-slate-200">
-                        <p className="text-xs text-slate-500 mb-1">Tuyến đường</p>
-                        <p className="font-bold text-slate-900">
-                          {selectedScheduling.routeId?.name}
-                        </p>
-                        <p className="text-sm text-slate-600 mt-1">
-                          {new Date(selectedScheduling.departureDate).toLocaleDateString("vi-VN")} • {selectedScheduling.etd}
-                        </p>
-                      </div>
-
-                      {/* Customer Info */}
-                      <div className="mb-4 pb-4 border-b border-slate-200">
-                        <p className="text-xs text-slate-500 mb-1">Khách hàng</p>
-                        <p className="font-bold text-slate-900">
-                          {selectedCustomer?.firstName} {selectedCustomer?.lastName}
-                        </p>
-                        <p className="text-sm text-slate-600">{selectedCustomer?.phone}</p>
-                      </div>
-
-                      {/* Selected Seat */}
-                      <div className="mb-4 pb-4 border-b border-slate-200">
-                        <p className="text-xs text-slate-500 mb-1">Ghế đã chọn</p>
-                        {selectedSeat ? (
-                          <div className="flex items-center gap-2">
-                            <span className="px-3 py-1 bg-blue-600 text-white rounded-lg font-bold">
-                              {selectedSeat.seatNo}
-                            </span>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-slate-400 italic">Chưa chọn ghế</p>
-                        )}
-                      </div>
-
-                      {/* Price */}
-                      <div className="mb-6">
-                        <p className="text-xs text-slate-500 mb-1">Tổng tiền</p>
-                        <p className="text-3xl font-black text-blue-600">
-                          {ticketService.formatCurrency(selectedScheduling.price || 0)}
-                        </p>
-                      </div>
-
-                      {/* Continue Button */}
-                      <button
-                        onClick={() => {
-                          if (selectedSeat) {
-                            setCurrentStep("confirm");
-                          } else {
-                            alert("Vui lòng chọn ghế");
-                          }
-                        }}
-                        disabled={!selectedSeat}
-                        className="w-full px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Tiếp tục
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
-                <p className="text-center text-slate-500">Không thể tải thông tin ghế</p>
-              </div>
-            )}
-          </div>
+        {currentStep === "select-seat" && selectedScheduling && selectedCustomer && (
+          <SeatSelectionWithSocket
+            scheduling={selectedScheduling}
+            customer={selectedCustomer}
+            onBack={() => {
+              setCurrentStep("search-customer");
+              setSeats([]);
+              setSelectedSeat(null);
+            }}
+            onContinue={(seat) => {
+              setSelectedSeat(seat);
+              setCurrentStep("confirm");
+            }}
+          />
         )}
 
         {/* Step 4: Confirm */}
@@ -700,21 +605,19 @@ export default function CreateTicketPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setPaymentMethod("CASH")}
-                    className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${
-                      paymentMethod === "CASH"
+                    className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${paymentMethod === "CASH"
                         ? "bg-green-50 border-green-500 text-green-700"
                         : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
-                    }`}
+                      }`}
                   >
                     Tiền mặt
                   </button>
                   <button
                     onClick={() => setPaymentMethod("BANKING")}
-                    className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${
-                      paymentMethod === "BANKING"
+                    className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${paymentMethod === "BANKING"
                         ? "bg-blue-50 border-blue-500 text-blue-700"
                         : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
-                    }`}
+                      }`}
                   >
                     Chuyển khoản
                   </button>
@@ -810,20 +713,18 @@ function StepIndicator({
   return (
     <div className="flex flex-col items-center">
       <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-          completed
+        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${completed
             ? "bg-emerald-500 text-white"
             : active
-            ? "bg-blue-600 text-white"
-            : "bg-slate-200 text-slate-400"
-        }`}
+              ? "bg-blue-600 text-white"
+              : "bg-slate-200 text-slate-400"
+          }`}
       >
         {completed ? <FiCheckCircle /> : active ? "●" : "○"}
       </div>
       <span
-        className={`text-xs mt-2 font-bold ${
-          active ? "text-blue-600" : "text-slate-400"
-        }`}
+        className={`text-xs mt-2 font-bold ${active ? "text-blue-600" : "text-slate-400"
+          }`}
       >
         {label}
       </span>
