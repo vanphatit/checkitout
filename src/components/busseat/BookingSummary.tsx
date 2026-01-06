@@ -1,0 +1,374 @@
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+import { BookingSummaryProps } from "@/types/bus";
+import { ticketService } from "@/services/ticketService";
+import { promotionService } from "@/services/promotionService";
+import { Promotion } from "@/types/promotion";
+import { FiLoader, FiTag } from "react-icons/fi";
+import { ar } from "zod/locales";
+
+export default function BookingSummary({
+  selectedSeats,
+  price,
+  data,
+  routeData,
+  schedulingId,
+  etd,
+  eta,
+  distance,
+  estimatedDuration,
+  arrivalDate,
+  departureDate,
+}: BookingSummaryProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [promotionCode, setPromotionCode] = useState("");
+  const [appliedPromotion, setAppliedPromotion] = useState<Promotion | null>(
+    null
+  );
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const routeName = routeData.name;
+
+  const [from, to] = routeName.split(" - ");
+
+  const subtotal = selectedSeats.reduce((sum, seatId) => {
+    const seat = data.find((x) => x.seatNo === seatId);
+    return sum + (seat ? price : 0);
+  }, 0);
+
+  // Calculate discount amount
+  const discountAmount = appliedPromotion
+    ? Math.round((subtotal * appliedPromotion.value) / 100)
+    : 0;
+
+  // Calculate final total
+  const total = subtotal - discountAmount;
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
+  const handleApplyPromotion = async () => {
+    if (!promotionCode.trim()) {
+      setPromoError("Vui lòng nhập mã khuyến mãi");
+      return;
+    }
+
+    setIsValidatingPromo(true);
+    setPromoError(null);
+
+    try {
+      const promotion = await promotionService.getPromotionByCode(
+        promotionCode.trim()
+      );
+
+      // Check if promotion is active
+      if (!promotion.isActive) {
+        setPromoError("Mã khuyến mãi đã hết hạn hoặc không còn hiệu lực");
+        setAppliedPromotion(null);
+        return;
+      }
+
+      // Check expiry date
+      const now = new Date();
+      const expiryDate = new Date(promotion.expiryDate);
+      if (expiryDate < now) {
+        setPromoError("Mã khuyến mãi đã hết hạn");
+        setAppliedPromotion(null);
+        return;
+      }
+
+      // Check start date
+      const startDate = new Date(promotion.startDate);
+      if (startDate > now) {
+        setPromoError("Mã khuyến mãi chưa có hiệu lực");
+        setAppliedPromotion(null);
+        return;
+      }
+
+      setAppliedPromotion(promotion);
+      setPromoError(null);
+    } catch (error: unknown) {
+      console.error("Promotion validation error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (error as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message || "Mã khuyến mãi không hợp lệ";
+      setPromoError(errorMessage);
+      setAppliedPromotion(null);
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
+
+  const handleRemovePromotion = () => {
+    setAppliedPromotion(null);
+    setPromotionCode("");
+    setPromoError(null);
+  };
+
+  const handleCheckout = async () => {
+    if (selectedSeats.length === 0) return;
+
+    try {
+      setIsProcessing(true);
+
+      // Get selected seat IDs
+      const seatIds = selectedSeats
+        .map((seatNo) => {
+          const seat = data.find((s) => s.seatNo === seatNo);
+          return seat?._id;
+        })
+        .filter(Boolean) as string[];
+
+      if (seatIds.length === 0) {
+        alert("Không tìm thấy thông tin ghế. Vui lòng thử lại.");
+        return;
+      }
+
+      // For now, use first seat (or you can handle multiple seats differently)
+      const seatId = seatIds[0];
+
+      // Call createAndPay API
+      const result = await ticketService.createAndPay({
+        seatId,
+        schedulingId,
+        paymentMethod: "BANKING",
+        ...(appliedPromotion && { promotionCode: appliedPromotion.code }),
+      });
+
+      if (result.payment.success && result.payment.paymentUrl) {
+        // Redirect to VNPay
+        window.location.href = result.payment.paymentUrl;
+      } else {
+        alert("Không thể tạo link thanh toán. Vui lòng thử lại.");
+      }
+    } catch (error: unknown) {
+      console.error("Checkout error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (error as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message || "Có lỗi xảy ra khi tạo vé. Vui lòng thử lại.";
+      alert(errorMessage);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="bg-neutral-50 rounded-xl py-4 px-6 border border-neutral-200 shadow-sm">
+      <div className="w-full space-y-2">
+        {/* Destination */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg text-neutral-600 font-medium">
+            Lộ trình của bạn
+          </h1>
+          <Link href="/scheduling" className="text-sm text-primary font-medium">
+            Thay đổi lộ trình
+          </Link>
+        </div>
+
+        <div className="space-y-1">
+          <p className="text-sm text-neutral-400">
+            Từ <span className="font-medium text-neutral-600">{from}</span>
+          </p>
+          <p className="text-sm text-neutral-400">
+            Đến <span className="font-medium text-neutral-600">{to}</span>
+          </p>
+
+          {arrivalDate && departureDate && etd && eta && (
+            <div className="flex items-center gap-2 py-2">
+              <h1 className="text-sm text-neutral-600">
+                <span className="font-medium">
+                  {new Date(departureDate).toLocaleDateString("vi-VN")} ({etd})
+                </span>
+              </h1>
+              <div className="flex-1 border-dashed border border-neutral-300" />
+              <h1 className="text-sm text-neutral-600">
+                <span className="font-medium">
+                  {new Date(arrivalDate).toLocaleDateString("vi-VN")} ({eta})
+                </span>
+              </h1>
+            </div>
+          )}
+
+          {distance && (
+            <p className="text-sm text-neutral-500">
+              <span className="font-medium text-neutral-600">{distance}km</span>
+            </p>
+          )}
+
+          {estimatedDuration && (
+            <p className="text-sm text-neutral-500">
+              Thời gian:{" "}
+              <span className="font-medium text-neutral-600">
+                {formatDuration(estimatedDuration)}
+              </span>
+            </p>
+          )}
+        </div>
+
+        {/* Selected seats */}
+        <div className="space-y-3 py-2">
+          <h1 className="text-lg text-neutral-600 font-medium">
+            Chỗ ngồi được chọn
+          </h1>
+
+          {selectedSeats.length === 0 ? (
+            <p className="text-sm text-neutral-500">
+              Không có chỗ nào được chọn
+            </p>
+          ) : (
+            <div className="flex gap-3 flex-wrap">
+              {selectedSeats.map((seatId) => (
+                <div
+                  key={seatId}
+                  className="w-9 h-9 bg-neutral-200/80 rounded-lg flex items-center justify-center text-base text-neutral-700 font-semibold"
+                >
+                  {seatId}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Promotion Code */}
+        <div className="space-y-2">
+          <h3 className="text-lg text-neutral-600 font-medium">
+            Mã khuyến mãi
+          </h3>
+          {!appliedPromotion ? (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={promotionCode}
+                  onChange={(e) =>
+                    setPromotionCode(e.target.value.toUpperCase())
+                  }
+                  placeholder="Nhập mã khuyến mãi"
+                  className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  disabled={isValidatingPromo}
+                />
+                <button
+                  onClick={handleApplyPromotion}
+                  disabled={isValidatingPromo || !promotionCode.trim()}
+                  className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isValidatingPromo ? (
+                    <>
+                      <FiLoader className="w-4 h-4 animate-spin" />
+                      Kiểm tra
+                    </>
+                  ) : (
+                    "Áp dụng"
+                  )}
+                </button>
+              </div>
+              {promoError && (
+                <p className="text-xs text-red-500">{promoError}</p>
+              )}
+            </div>
+          ) : (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FiTag className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-700">
+                    {appliedPromotion.code}
+                  </span>
+                </div>
+                <button
+                  onClick={handleRemovePromotion}
+                  className="text-xs text-red-500 hover:text-red-700"
+                >
+                  Xóa
+                </button>
+              </div>
+              <p className="text-xs text-green-600">
+                {appliedPromotion.name} - Giảm {appliedPromotion.value}%
+              </p>
+              {appliedPromotion.description && (
+                <p className="text-xs text-neutral-500">
+                  {appliedPromotion.description}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Fare */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-dashed border-l pl-2">
+            <h3 className="text-sm text-neutral-500">Giá vé:</h3>
+            <p className="text-sm text-neutral-600">
+              {price.toLocaleString()} VND
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between border-dashed border-l pl-2">
+            <h3 className="text-sm text-neutral-500">Tạm tính:</h3>
+            <p className="text-sm text-neutral-600">
+              {subtotal.toLocaleString()} VND
+            </p>
+          </div>
+
+          {appliedPromotion && (
+            <div className="flex items-center justify-between border-dashed border-l pl-2">
+              <h3 className="text-sm text-green-600">
+                Giảm giá ({appliedPromotion.value}%):
+              </h3>
+              <p className="text-sm text-green-600">
+                -{discountAmount.toLocaleString()} VND
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <h3 className="text-base text-neutral-500">Tổng giá</h3>
+            <span className="text-xs text-neutral-500">(Gồm thuế)</span>
+          </div>
+
+          <p className="text-base text-neutral-700 font-semibold">
+            {total.toLocaleString()} VND
+          </p>
+        </div>
+
+        {/* Checkout */}
+        {selectedSeats.length > 0 ? (
+          <button
+            onClick={handleCheckout}
+            disabled={isProcessing}
+            className="w-full bg-primary hover:bg-primary/90 text-sm text-white py-2.5 rounded-lg text-center uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isProcessing ? (
+              <>
+                <FiLoader className="w-4 h-4 animate-spin" />
+                Đang xử lý...
+              </>
+            ) : (
+              "Hoàn tất để thanh toán"
+            )}
+          </button>
+        ) : (
+          <div className="space-y-1">
+            <button
+              disabled
+              className="w-full bg-primary text-white py-2.5 rounded-lg opacity-50 cursor-not-allowed"
+            >
+              Hoàn tất để thanh toán
+            </button>
+            <small className="text-xs text-neutral-600">
+              Phải chọn ít nhất một chỗ ngồi để tiếp tục.
+            </small>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
