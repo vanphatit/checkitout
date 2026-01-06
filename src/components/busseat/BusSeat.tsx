@@ -36,6 +36,15 @@ const BusSeat: React.FC<BusSeatProps> = ({
 }) => {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [showError, setShowError] = useState(false);
+  const [zoomStyle, setZoomStyle] = useState({ transformOrigin: "center" });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { left, top, width, height } =
+      e.currentTarget.getBoundingClientRect();
+    const x = ((e.pageX - left) / width) * 100;
+    const y = ((e.pageY - top) / height) * 100;
+    setZoomStyle({ transformOrigin: `${x}% ${y}%` });
+  };
 
   const {
     lockSeat,
@@ -156,15 +165,31 @@ const BusSeat: React.FC<BusSeatProps> = ({
           </button>
 
           {/* Ảnh hiện tại */}
-          <div className="max-w-4xl max-h-[80vh] flex flex-col items-center">
-            <img
-              src={busData.images[currentImgIndex].url}
-              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-              alt="Bus interior"
-            />
-            <p className="text-white mt-4 font-medium">
-              {currentImgIndex + 1} / {busData.images.length}
-            </p>
+          <div className="max-w-auto max-h-auto flex flex-col items-center">
+            <div
+              className="relative overflow-hidden rounded-lg cursor-zoom-in border border-white/10"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => setZoomStyle({ transformOrigin: "center" })}
+            >
+              <img
+                src={busData.images[currentImgIndex].url}
+                style={{
+                  ...zoomStyle,
+                  transition: "transform 0.1s ease-out",
+                }}
+                className="max-w-full max-h-[75vh] object-contain hover:scale-[2.5]"
+                alt="Bus interior"
+              />
+            </div>
+
+            <div className="flex flex-col items-center mt-4">
+              <p className="text-gray-400 text-sm mb-1">
+                Rê chuột vào ảnh để phóng to chi tiết
+              </p>
+              <p className="text-white font-medium">
+                {currentImgIndex + 1} / {busData.images.length}
+              </p>
+            </div>
           </div>
 
           {/* Nút Phải */}
