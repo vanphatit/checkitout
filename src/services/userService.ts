@@ -191,6 +191,8 @@ export const userService = {
       "/users/profile/avatar"
     );
     return resolveData<User>(response.data);
+  },
+  
   async searchUserByEmailOrPhone(query: string): Promise<User | null> {
     try {
       const response = await api.get<MaybeApiResponse<UsersCollection | User[]>>(
