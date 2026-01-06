@@ -71,10 +71,10 @@ export default function MyTicketsPage() {
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
-          <h2 className="text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl font-bold text-neutral-900">
             Vé của tôi
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-neutral-500 mt-1">
             Quản lý và theo dõi các vé đã đặt
           </p>
         </div>
@@ -98,40 +98,40 @@ export default function MyTicketsPage() {
 
       {/* --- SUMMARY STATS --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-6 text-white shadow-lg">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-white/20 rounded-xl">
-              <FiCheckCircle className="w-6 h-6" />
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <FiCheckCircle className="w-5 h-5 text-blue-600" />
             </div>
-            <h3 className="text-sm font-bold uppercase tracking-wider opacity-90">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
               Vé đã thanh toán
             </h3>
           </div>
-          <p className="text-3xl font-black">{successTickets.length}</p>
+          <p className="text-2xl font-bold text-neutral-900">{successTickets.length}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-3xl p-6 text-white shadow-lg">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-white/20 rounded-xl">
-              <FiClock className="w-6 h-6" />
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-amber-50 rounded-lg">
+              <FiClock className="w-5 h-5 text-amber-600" />
             </div>
-            <h3 className="text-sm font-bold uppercase tracking-wider opacity-90">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
               Chờ thanh toán
             </h3>
           </div>
-          <p className="text-3xl font-black">{pendingTickets.length}</p>
+          <p className="text-2xl font-bold text-neutral-900">{pendingTickets.length}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 text-white shadow-lg">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-white/20 rounded-xl">
-              <FiCheckCircle className="w-6 h-6" />
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-emerald-50 rounded-lg">
+              <FiCheckCircle className="w-5 h-5 text-emerald-600" />
             </div>
-            <h3 className="text-sm font-bold uppercase tracking-wider opacity-90">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
               Tổng chi tiêu
             </h3>
           </div>
-          <p className="text-3xl font-black">
+          <p className="text-2xl font-bold text-neutral-900">
             {ticketService.formatCurrency(totalSpent)}
           </p>
         </div>
@@ -298,7 +298,7 @@ export default function MyTicketsPage() {
                         <button
                           onClick={() => handlePayNow(ticket._id)}
                           disabled={payingTicketId === ticket._id}
-                          className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {payingTicketId === ticket._id ? (
                             <>

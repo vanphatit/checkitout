@@ -17,6 +17,8 @@ import {
   FiTrendingUp,
   FiEye,
   FiPlus,
+  FiSearch,
+  FiX,
 } from "react-icons/fi";
 
 type Props = {
@@ -24,6 +26,7 @@ type Props = {
   status: string;
   period: string;
   paymentMethod: string;
+  search?: string;
 };
 
 export default function TicketManagementClient({
@@ -31,16 +34,19 @@ export default function TicketManagementClient({
   status,
   period,
   paymentMethod,
+  search,
 }: Props) {
   const [response, setResponse] = useState<TicketsAnalyticsResponse | null>(
     null
   );
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState(search || "");
 
   const currentPage = page || 1;
   const statusFilter = status || "";
   const periodFilter = period || "";
   const paymentFilter = paymentMethod || "";
+  const searchQuery = search || "";
 
   useEffect(() => {
     setLoading(true);
@@ -50,10 +56,20 @@ export default function TicketManagementClient({
       limit: 10,
     };
 
-    // Only apply filters if they are selected
-    if (statusFilter) params.status = statusFilter as TicketStatus;
-    if (periodFilter) params.period = periodFilter as any;
-    if (paymentFilter) params.paymentMethod = paymentFilter as PaymentMethod;
+    // Nếu có search query (email hoặc phone), không áp dụng các filter khác
+    if (searchQuery) {
+      // Kiểm tra xem search query là email hay phone
+      if (searchQuery.includes("@")) {
+        params.email = searchQuery;
+      } else {
+        params.phone = searchQuery;
+      }
+    } else {
+      // Chỉ áp dụng các filter khi không có search
+      if (statusFilter) params.status = statusFilter as TicketStatus;
+      if (periodFilter) params.period = periodFilter as any;
+      if (paymentFilter) params.paymentMethod = paymentFilter as PaymentMethod;
+    }
 
     ticketService
       .getAllTickets(params)
@@ -61,7 +77,7 @@ export default function TicketManagementClient({
         setResponse(res);
       })
       .finally(() => setLoading(false));
-  }, [currentPage, statusFilter, periodFilter, paymentFilter]);
+  }, [currentPage, statusFilter, periodFilter, paymentFilter, searchQuery]);
 
   if (loading) {
     return (
@@ -93,10 +109,10 @@ export default function TicketManagementClient({
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
-          <h2 className="text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl font-bold text-neutral-900">
             Quản lý vé
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-neutral-500 mt-1">
             Quản lý và theo dõi tất cả vé trong hệ thống
           </p>
         </div>
@@ -120,49 +136,122 @@ export default function TicketManagementClient({
 
       {/* --- SUMMARY STATS --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-6 text-white shadow-lg">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-white/20 rounded-xl">
-              <FiDollarSign className="w-6 h-6" />
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <FiDollarSign className="w-5 h-5 text-blue-600" />
             </div>
-            <h3 className="text-sm font-bold uppercase tracking-wider opacity-90">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
               Tổng doanh thu
             </h3>
           </div>
-          <p className="text-3xl font-black">
+          <p className="text-2xl font-bold text-neutral-900">
             {ticketService.formatCurrency(summary.totalRevenue)}
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 text-white shadow-lg">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-white/20 rounded-xl">
-              <FiShoppingCart className="w-6 h-6" />
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-emerald-50 rounded-lg">
+              <FiShoppingCart className="w-5 h-5 text-emerald-600" />
             </div>
-            <h3 className="text-sm font-bold uppercase tracking-wider opacity-90">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
               Số lượng vé
             </h3>
           </div>
-          <p className="text-3xl font-black">{summary.ticketCount}</p>
+          <p className="text-2xl font-bold text-neutral-900">{summary.ticketCount}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-white/20 rounded-xl">
-              <FiTrendingUp className="w-6 h-6" />
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-purple-50 rounded-lg">
+              <FiTrendingUp className="w-5 h-5 text-purple-600" />
             </div>
-            <h3 className="text-sm font-bold uppercase tracking-wider opacity-90">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
               Giá vé trung bình
             </h3>
           </div>
-          <p className="text-3xl font-black">
+          <p className="text-2xl font-bold text-neutral-900">
             {ticketService.formatCurrency(summary.averageTicketPrice)}
           </p>
         </div>
       </div>
 
+      {/* --- SEARCH BOX --- */}
+      <div className="mb-6">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.currentTarget;
+            const formData = new FormData(form);
+            const search = formData.get("search") as string;
+            window.location.href = search
+              ? `/admin/tickets?search=${encodeURIComponent(search)}`
+              : "/admin/tickets";
+          }}
+          className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-1 relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                <FiSearch className="w-5 h-5" />
+              </div>
+              <input
+                type="text"
+                name="search"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Tìm kiếm theo email hoặc số điện thoại khách hàng..."
+                className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchInput("");
+                    if (searchQuery) {
+                      window.location.href = "/admin/tickets";
+                    }
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                >
+                  <FiX className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2"
+            >
+              <FiSearch className="w-4 h-4" />
+              Tìm kiếm
+            </button>
+          </div>
+          {searchQuery && (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-sm text-neutral-600">
+                Kết quả tìm kiếm cho:
+              </span>
+              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
+                {searchQuery}
+              </span>
+              <button
+                onClick={() => {
+                  setSearchInput("");
+                  window.location.href = "/admin/tickets";
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800 font-semibold"
+              >
+                Xóa bộ lọc
+              </button>
+            </div>
+          )}
+        </form>
+      </div>
+
       {/* --- FILTERS --- */}
-      <div className="mt-8 mb-4 flex flex-col gap-4">
+      {!searchQuery && (
+        <div className="mt-8 mb-4 flex flex-col gap-4">
         {/* Period Filter */}
         <div className="flex items-center gap-2 w-full overflow-x-auto pb-2">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 ml-1 flex items-center gap-1">
@@ -242,6 +331,7 @@ export default function TicketManagementClient({
           </div>
         </div>
       </div>
+      )}
 
       {/* --- DATA TABLE --- */}
       <div className="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">

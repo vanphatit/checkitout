@@ -72,4 +72,16 @@ export const schedulingService = {
         const response = await api.get<ApiResponse<SchedulingStats>>("/scheduling/stats");
         return resolveData(response.data);
     },
+
+    async getSchedulingsByRoute(routeId: string, date?: string): Promise<Scheduling[]> {
+        const params = new URLSearchParams();
+        if (date) params.append("date", date);
+        const queryString = params.toString();
+        const url = queryString 
+            ? `/scheduling/by-route/${routeId}?${queryString}`
+            : `/scheduling/by-route/${routeId}`;
+        
+        const response = await api.get<ApiResponse<Scheduling[]>>(url);
+        return resolveData(response.data);
+    },
 };
