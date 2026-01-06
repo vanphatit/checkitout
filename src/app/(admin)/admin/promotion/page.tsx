@@ -42,9 +42,11 @@ const PAGE_SIZE = 10;
 const promotionSchema = z
   .object({
     name: z.string().min(3, "Tên khuyến mãi phải có ít nhất 3 ký tự"),
-    type: z.enum(["Default", "Recurring", "Special"], {
-      required_error: "Vui lòng chọn loại khuyến mãi",
-    }),
+    type: z
+      .enum(["Default", "Recurring", "Special"])
+      .refine((val) => val !== undefined, {
+        message: "Vui lòng chọn loại khuyến mãi",
+      }),
     startDate: z.string().min(1, "Vui lòng chọn ngày bắt đầu"),
     expiryDate: z.string().min(1, "Vui lòng chọn ngày kết thúc"),
     value: z
@@ -54,7 +56,7 @@ const promotionSchema = z
     recurringMonth: z.number().min(1).max(12).optional(),
     recurringDay: z.number().min(1).max(31).optional(),
     description: z.string().optional(),
-    isActive: z.boolean().default(true),
+    isActive: z.boolean(),
   })
   .refine(
     (data) => {
@@ -139,8 +141,8 @@ export default function PromotionManagementPage() {
           statusFilter === "all" ? undefined : statusFilter === "active",
       });
 
-      // Backend returns nested structure: response.data.data
-      const promotionsData = Array.isArray(response.data?.data)
+      // Backend returns paginated response
+      const promotionsData = Array.isArray(response.data.data)
         ? response.data.data
         : [];
 
@@ -151,8 +153,8 @@ export default function PromotionManagementPage() {
           : promotionsData.filter((p) => p.type === typeFilter);
 
       setPromotions(filteredData);
-      setTotal(response.data?.total || 0);
-      setTotalPages(response.data?.totalPages || 1);
+      setTotal(response.total || 0);
+      setTotalPages(response.totalPages || 1);
 
       // Fetch stats
       const statsData = await promotionService.getStats();
@@ -412,13 +414,12 @@ export default function PromotionManagementPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                              promo.type === "Recurring"
-                                ? "bg-blue-100 text-blue-700 border border-blue-200"
-                                : promo.type === "Special"
+                            className={`rounded-full px-2 py-1 text-xs font-semibold ${promo.type === "Recurring"
+                              ? "bg-blue-100 text-blue-700 border border-blue-200"
+                              : promo.type === "Special"
                                 ? "bg-purple-100 text-purple-700 border border-purple-200"
                                 : "bg-gray-100 text-gray-700 border border-gray-200"
-                            }`}
+                              }`}
                           >
                             {promo.type}
                           </span>
@@ -452,11 +453,10 @@ export default function PromotionManagementPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                              promo.isActive
-                                ? "bg-green-100 text-green-700 border border-green-200"
-                                : "bg-gray-100 text-gray-700 border border-gray-200"
-                            }`}
+                            className={`rounded-full px-2 py-1 text-xs font-semibold ${promo.isActive
+                              ? "bg-green-100 text-green-700 border border-green-200"
+                              : "bg-gray-100 text-gray-700 border border-gray-200"
+                              }`}
                           >
                             {promo.isActive ? "Hoạt động" : "Tạm dừng"}
                           </span>

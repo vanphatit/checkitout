@@ -276,7 +276,7 @@ export default function EditBusModal({ bus }: { bus: Bus }) {
                     <select
                       value={formState.status}
                       onChange={(e) =>
-                        setFormState({ ...formState, status: e.target.value })
+                        setFormState({ ...formState, status: e.target.value as "AVAILABLE" | "UNAVAILABLE" })
                       }
                       className="form-input-edit appearance-none cursor-pointer"
                     >

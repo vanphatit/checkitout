@@ -44,7 +44,7 @@ export default function AdminTicketDetailPage() {
     newSeatId: "",
     reason: "",
   });
-  
+
   // Transfer modal dropdown data - NO ROUTE SELECTION (must be same route)
   const [currentRouteId, setCurrentRouteId] = useState<string>("");
   const [schedulings, setSchedulings] = useState<Scheduling[]>([]);
@@ -64,21 +64,21 @@ export default function AdminTicketDetailPage() {
   // Check if ticket can be transferred (must be at least 3 hours before departure)
   const canTransfer = (): boolean => {
     if (!ticket || ticket.status !== TicketStatus.SUCCESS) return false;
-    
+
     const departureDate = ticket.snapshot?.scheduling?.departureDate;
     if (!departureDate) return false;
-    
+
     const now = new Date();
     const departure = new Date(departureDate);
     const hoursUntilDeparture = (departure.getTime() - now.getTime()) / (1000 * 60 * 60);
-    
+
     return hoursUntilDeparture >= 3;
   };
 
   useEffect(() => {
     if (!ticketId) return;
     loadTicket();
-    
+
     // Cleanup QR code URL on unmount
     return () => {
       if (qrCodeUrl) {
@@ -92,26 +92,32 @@ export default function AdminTicketDetailPage() {
     if (showTransferModal && ticket) {
       // Get routeId from snapshot (most reliable source)
       const routeId = ticket.snapshot?.route?.routeId;
-      
+
       if (routeId) {
         setCurrentRouteId(routeId);
         setLoadingSchedulings(true);
         schedulingService
-          .getSchedulingsByRoute(routeId)
-          .then((allSchedulings) => {
-            // Filter out the current scheduling and only show available ones with same price
-            const currentSchedulingId = typeof ticket.schedulingId === 'string' 
-              ? ticket.schedulingId 
-              : ticket.schedulingId._id;
-            
+          .getSchedulings({
+            status: "scheduled", limit: 100, sortBy: "departureDate", sortOrder: "desc"
+          })
+          .then((response) => {
+
             // Get current ticket price from snapshot
             const currentPrice = ticket.snapshot?.scheduling?.price;
-            
-            const availableSchedulings = allSchedulings.filter(
-              s => s._id !== currentSchedulingId && 
-                   s.availableSeats > 0 &&
-                   (!currentPrice || s.price === currentPrice)  // Must have same price
+
+            console.log("Current ticket price:", currentPrice);
+
+            console.log("All schedulings fetched for transfer:", response);
+
+            const availableSchedulings = response.data.filter(
+              s => s.status === "scheduled" &&
+                s.availableSeats > 0 &&
+                s.price !== undefined &&
+                currentPrice !== undefined &&
+                (s.price <= currentPrice)  // Must have same price
             );
+
+            console.log("Available schedulings for transfer:", availableSchedulings);
             setSchedulings(availableSchedulings);
           })
           .catch(console.error)
@@ -134,10 +140,10 @@ export default function AdminTicketDetailPage() {
         setLoadingSeats(true);
         // Get first bus from busIds array
         const firstBus = selectedScheduling.busIds[0];
-        const busId = typeof firstBus === 'string' 
-          ? firstBus 
+        const busId = typeof firstBus === 'string'
+          ? firstBus
           : firstBus._id;
-        
+
         seatService
           .getSeatsByBusId(busId)
           .then((allSeats) => {
@@ -164,7 +170,7 @@ export default function AdminTicketDetailPage() {
       .getTicketById(ticketId)
       .then(async (data) => {
         setTicket(data);
-        
+
         // Load QR code if ticket is successful
         if (data.status === "SUCCESS") {
           try {
@@ -695,15 +701,15 @@ export default function AdminTicketDetailPage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
                 >
                   <option value="">
-                    {loadingSchedulings 
-                      ? "Đang tải..." 
-                      : schedulings.length === 0 
-                      ? "Không có chuyến đi nào phù hợp (cùng tuyến và cùng giá)" 
-                      : "-- Chọn chuyến đi --"}
+                    {loadingSchedulings
+                      ? "Đang tải..."
+                      : schedulings.length === 0
+                        ? "Không có chuyến đi nào phù hợp (cùng tuyến và cùng giá)"
+                        : "-- Chọn chuyến đi --"}
                   </option>
                   {schedulings.map((scheduling) => (
                     <option key={scheduling._id} value={scheduling._id}>
-                      {new Date(scheduling.departureDate).toLocaleDateString('vi-VN')} - {scheduling.etd} 
+                      {new Date(scheduling.departureDate).toLocaleDateString('vi-VN')} - {scheduling.etd}
                       ({scheduling.availableSeats} ghế trống)
                     </option>
                   ))}
@@ -727,11 +733,11 @@ export default function AdminTicketDetailPage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
                 >
                   <option value="">
-                    {loadingSeats 
-                      ? "Đang tải ghế..." 
-                      : seats.length === 0 
-                      ? "Không có ghế trống" 
-                      : "-- Chọn ghế --"}
+                    {loadingSeats
+                      ? "Đang tải ghế..."
+                      : seats.length === 0
+                        ? "Không có ghế trống"
+                        : "-- Chọn ghế --"}
                   </option>
                   {seats.map((seat) => (
                     <option key={seat._id} value={seat._id}>
@@ -838,21 +844,19 @@ export default function AdminTicketDetailPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setPaymentMethod("BANKING")}
-                  className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${
-                    paymentMethod === "BANKING"
-                      ? "bg-blue-50 border-blue-500 text-blue-700"
-                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
-                  }`}
+                  className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${paymentMethod === "BANKING"
+                    ? "bg-blue-50 border-blue-500 text-blue-700"
+                    : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
+                    }`}
                 >
                   Chuyển khoản
                 </button>
                 <button
                   onClick={() => setPaymentMethod("CASH")}
-                  className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${
-                    paymentMethod === "CASH"
-                      ? "bg-green-50 border-green-500 text-green-700"
-                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
-                  }`}
+                  className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all border-2 ${paymentMethod === "CASH"
+                    ? "bg-green-50 border-green-500 text-green-700"
+                    : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
+                    }`}
                 >
                   Tiền mặt
                 </button>

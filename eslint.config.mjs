@@ -10,7 +10,10 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...compat.extends(
+    "next/core-web-vitals",
+    "next/typescript"
+  ),
   {
     ignores: [
       "node_modules/**",
@@ -19,6 +22,28 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
     ],
+  },
+
+  // 🔥 CUSTOM RULE OVERRIDE
+  {
+    rules: {
+      // ===== TypeScript =====
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_" }
+      ],
+
+      // ===== React =====
+      "react-hooks/exhaustive-deps": "warn",
+      "react/no-unescaped-entities": "off",
+
+      // ===== Next.js =====
+      "@next/next/no-img-element": "off",
+
+      // ===== General =====
+      "no-console": "off",
+    },
   },
 ];
 

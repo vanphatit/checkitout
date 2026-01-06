@@ -2,8 +2,9 @@
 import { useSearchParams } from "next/navigation";
 import { FiXCircle, FiArrowRight } from "react-icons/fi";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default function PaymentFailedPage() {
+function PaymentFailedContent() {
   const searchParams = useSearchParams();
   const transactionId = searchParams.get("transactionId");
   const message = searchParams.get("message") || "Thanh toán không thành công";
@@ -78,5 +79,17 @@ export default function PaymentFailedPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentFailedPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500"></div>
+      </div>
+    }>
+      <PaymentFailedContent />
+    </Suspense>
   );
 }

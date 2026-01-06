@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Scheduling } from "@/types/scheduling";
 import { schedulingService } from "@/services/schedulingService";
@@ -12,7 +12,7 @@ import { TbArrowsExchange } from "react-icons/tb";
 import { FaMapMarkedAlt, FaSearch } from "react-icons/fa";
 import { StationAutocomplete } from "@/components/search/StationAutocomplete";
 
-export default function SchedulingPage() {
+function SchedulingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [schedulings, setSchedulings] = useState<Scheduling[]>([]);
@@ -55,11 +55,15 @@ export default function SchedulingPage() {
       setIsLoading(true);
       setError(null);
       try {
+        console.log("🔍 Fetching schedulings with status: scheduled");
         const result = await schedulingService.getSchedulings({
           date,
           page: pageNum,
           limit: 10,
+          status: "scheduled", // Chỉ hiển thị lịch trình đã lên lịch cho khách hàng
         });
+        console.log("📊 Result data:", result.data);
+        console.log("📊 Statuses found:", result.data.map(s => s.status));
 
         // Filter by from/to based on route name (client-side filtering)
         let filtered = result.data;
@@ -264,5 +268,17 @@ export default function SchedulingPage() {
         </div>
       </Container>
     </div>
+  );
+}
+
+export default function SchedulingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    }>
+      <SchedulingContent />
+    </Suspense>
   );
 }

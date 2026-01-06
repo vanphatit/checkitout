@@ -38,7 +38,7 @@ export interface UpdatePromotionDto {
 export interface PromotionListResponse {
   statusCode: number;
   message: string;
-  data: Promotion[];
+  data: { data: { promotions: Promotion[] } };
   total: number;
   page: number;
   limit: number;
