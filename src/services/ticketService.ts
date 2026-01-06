@@ -5,6 +5,8 @@ import {
   TicketsPageResponse,
   TicketsAnalyticsResponse,
   GetTicketsParams,
+  TicketListItem,
+  TicketStatus,
 } from "@/types/ticket";
 
 function resolveData<T>(res: ApiResponse<T>): T {
@@ -17,7 +19,7 @@ function resolveData<T>(res: ApiResponse<T>): T {
 export const ticketService = {
   /**
    * Get all tickets (Admin/Seller only)
-   * Uses analytics endpoint for better data structure
+   * Uses analytics endpoint for better data structure, or basic endpoint when searching
    */
   async getAllTickets(
     params?: GetTicketsParams
@@ -37,6 +39,72 @@ export const ticketService = {
     if (params?.schedulingId)
       query.append("schedulingId", params.schedulingId);
 
+    // Nếu search theo email hoặc phone, dùng endpoint /ticket
+    if (params?.email || params?.phone) {
+      const res = await api.get<ApiResponse<TicketsPageResponse>>(
+        `/ticket?${query}`
+      );
+      const pageData = resolveData(res.data);
+      
+      // Convert TicketsPageResponse to TicketsAnalyticsResponse format
+      const tickets = pageData.data.map((ticket): TicketListItem => ({
+        _id: ticket._id,
+        totalPrice: ticket.totalPrice,
+        paymentMethod: ticket.paymentMethod,
+        status: ticket.status,
+        createdAt: ticket.createdAt,
+        updatedAt: ticket.updatedAt,
+        paidAt: ticket.paidAt,
+        user: typeof ticket.userId === 'object' ? {
+          name: `${ticket.userId.firstName} ${ticket.userId.lastName}`,
+          email: ticket.userId.email || '',
+          phone: ticket.userId.phone || '',
+        } : null,
+        seat: typeof ticket.seatId === 'object' ? ticket.seatId.seatNo : '',
+        scheduling: typeof ticket.schedulingId === 'object' ? {
+          departureDate: ticket.schedulingId.departureDate,
+          etd: ticket.schedulingId.etd,
+        } : null,
+        promotion: ticket.promotionId && typeof ticket.promotionId === 'object' ? {
+          name: ticket.promotionId.name,
+          value: ticket.promotionId.value,
+        } : null,
+      }));
+
+      // Calculate summary from tickets
+      const totalRevenue = tickets.reduce((sum, t) => sum + (t.status === TicketStatus.SUCCESS ? t.totalPrice : 0), 0);
+      const successTickets = tickets.filter(t => t.status === TicketStatus.SUCCESS);
+      
+      return {
+        summary: {
+          totalRevenue,
+          ticketCount: tickets.length,
+          averageTicketPrice: successTickets.length > 0 ? totalRevenue / successTickets.length : 0,
+        },
+        byPaymentMethod: tickets.reduce((acc, t) => {
+          const method = t.paymentMethod;
+          if (!acc[method]) {
+            acc[method] = { count: 0, revenue: 0 };
+          }
+          acc[method].count++;
+          if (t.status === TicketStatus.SUCCESS) {
+            acc[method].revenue += t.totalPrice;
+          }
+          return acc;
+        }, {} as Record<string, { count: number; revenue: number }>),
+        tickets,
+        pagination: {
+          total: pageData.total,
+          page: pageData.page,
+          limit: pageData.limit,
+          totalPages: pageData.totalPages,
+          hasNextPage: pageData.hasNextPage,
+          hasPrevPage: pageData.hasPrevPage,
+        },
+      };
+    }
+
+    // Dùng analytics endpoint cho các trường hợp khác
     const res = await api.get<ApiResponse<TicketsAnalyticsResponse>>(
       `/ticket/analytics/tickets-list?${query}`
     );
@@ -190,6 +258,16 @@ export const ticketService = {
    */
   async generateQRCode(id: string): Promise<Blob> {
     const res = await api.get(`/ticket/${id}/qrcode`, {
+      responseType: "blob",
+    });
+    return res.data;
+  },
+
+  /**
+   * Download ticket as PDF
+   */
+  async downloadTicketPDF(id: string): Promise<Blob> {
+    const res = await api.get(`/ticket/${id}/download-pdf`, {
       responseType: "blob",
     });
     return res.data;

@@ -18,6 +18,7 @@ import {
   FiDownload,
 } from "react-icons/fi";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function TicketDetailPage() {
   const params = useParams();
@@ -28,21 +29,40 @@ export default function TicketDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [payingNow, setPayingNow] = useState(false);
-  const [downloadingQR, setDownloadingQR] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ticketId) return;
 
     ticketService
       .getTicketById(ticketId)
-      .then((data) => {
+      .then(async (data) => {
         setTicket(data);
+        
+        // Load QR code if ticket is successful
+        if (data.status === "SUCCESS") {
+          try {
+            const qrBlob = await ticketService.generateQRCode(data._id);
+            const qrUrl = URL.createObjectURL(qrBlob);
+            setQrCodeUrl(qrUrl);
+          } catch (qrError) {
+            console.error("Error loading QR code:", qrError);
+          }
+        }
       })
       .catch((err) => {
         console.error("Error fetching ticket:", err);
         setError(err.response?.data?.message || "Không thể tải thông tin vé");
       })
       .finally(() => setLoading(false));
+    
+    // Cleanup QR code URL on unmount
+    return () => {
+      if (qrCodeUrl) {
+        URL.revokeObjectURL(qrCodeUrl);
+      }
+    };
   }, [ticketId]);
 
   const handlePayNow = async () => {
@@ -61,25 +81,25 @@ export default function TicketDetailPage() {
     }
   };
 
-  const handleDownloadQR = async () => {
+  const handleDownloadPDF = async () => {
     if (!ticket?._id) return;
 
-    setDownloadingQR(true);
+    setDownloadingPDF(true);
     try {
-      const blob = await ticketService.generateQRCode(ticket._id);
+      const blob = await ticketService.downloadTicketPDF(ticket._id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `ticket-${ticket._id}-qrcode.png`;
+      a.download = `ticket-${ticket._id}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (err: any) {
-      console.error("QR download error:", err);
-      alert(err.response?.data?.message || "Không thể tải QR code");
+      console.error("PDF download error:", err);
+      alert(err.response?.data?.message || "Không thể tải vé PDF");
     } finally {
-      setDownloadingQR(false);
+      setDownloadingPDF(false);
     }
   };
 
@@ -152,18 +172,33 @@ export default function TicketDetailPage() {
     }
   };
 
-  const getStatusGradient = () => {
+  const getStatusBgColor = () => {
     switch (ticket.status) {
       case "SUCCESS":
-        return "from-emerald-500 to-emerald-600";
+        return "bg-emerald-50 border border-emerald-200";
       case "PENDING":
-        return "from-amber-500 to-amber-600";
+        return "bg-amber-50 border border-amber-200";
       case "FAILED":
-        return "from-rose-500 to-rose-600";
+        return "bg-rose-50 border border-rose-200";
       case "TRANSFER":
-        return "from-blue-500 to-blue-600";
+        return "bg-blue-50 border border-blue-200";
       default:
-        return "from-slate-500 to-slate-600";
+        return "bg-neutral-50 border border-neutral-200";
+    }
+  };
+
+  const getStatusTextColor = () => {
+    switch (ticket.status) {
+      case "SUCCESS":
+        return "text-emerald-900";
+      case "PENDING":
+        return "text-amber-900";
+      case "FAILED":
+        return "text-rose-900";
+      case "TRANSFER":
+        return "text-blue-900";
+      default:
+        return "text-neutral-900";
     }
   };
 
@@ -178,35 +213,35 @@ export default function TicketDetailPage() {
           >
             <FiArrowLeft /> Quay lại danh sách vé
           </Link>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-neutral-900">
             Chi tiết vé
           </h1>
         </div>
 
         {/* Status Banner */}
         <div
-          className={`bg-gradient-to-r ${getStatusGradient()} rounded-3xl p-8 text-white mb-8 shadow-lg`}
+          className={`${getStatusBgColor()} rounded-xl p-8 mb-8 shadow-sm`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+              <div className="w-16 h-16 bg-white rounded-xl shadow-sm flex items-center justify-center">
                 {getStatusIcon()}
               </div>
               <div>
-                <p className="text-sm font-bold uppercase tracking-wider opacity-90">
+                <p className={`text-xs font-semibold uppercase tracking-wider ${getStatusTextColor()} opacity-70`}>
                   Trạng thái vé
                 </p>
-                <h2 className="text-3xl font-black mt-1">{getStatusText()}</h2>
+                <h2 className={`text-2xl font-bold mt-1 ${getStatusTextColor()}`}>{getStatusText()}</h2>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {ticket.status === "SUCCESS" && (
                 <button
-                  onClick={handleDownloadQR}
-                  disabled={downloadingQR}
-                  className="px-6 py-3 bg-white text-emerald-600 rounded-xl font-bold hover:bg-emerald-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  onClick={handleDownloadPDF}
+                  disabled={downloadingPDF}
+                  className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
                 >
-                  {downloadingQR ? (
+                  {downloadingPDF ? (
                     <>
                       <FiLoader className="animate-spin" />
                       Đang tải...
@@ -214,7 +249,7 @@ export default function TicketDetailPage() {
                   ) : (
                     <>
                       <FiDownload />
-                      Tải mã QR
+                      Tải vé PDF
                     </>
                   )}
                 </button>
@@ -223,7 +258,7 @@ export default function TicketDetailPage() {
                 <button
                   onClick={handlePayNow}
                   disabled={payingNow}
-                  className="px-6 py-3 bg-white text-amber-600 rounded-xl font-bold hover:bg-amber-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-6 py-3 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
                 >
                   {payingNow ? (
                     <>
@@ -368,6 +403,34 @@ export default function TicketDetailPage() {
               )}
             </div>
           </div>
+
+          {/* QR Code - Only show for SUCCESS tickets */}
+          {ticket.status === "SUCCESS" && qrCodeUrl && (
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                  <FiDownload className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900">
+                  Mã QR vé của bạn
+                </h3>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                  <Image
+                    src={qrCodeUrl}
+                    alt="QR Code"
+                    width={200}
+                    height={200}
+                    className="w-48 h-48"
+                  />
+                </div>
+                <p className="text-sm text-slate-500 mt-4 text-center">
+                  Quét mã QR này khi lên xe
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Booking Info */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">

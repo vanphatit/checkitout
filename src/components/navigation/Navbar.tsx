@@ -135,7 +135,7 @@ const Navbar: React.FC = () => {
                   className={`text-base font-medium ${linkClass}`}
                   onClick={() => setOpen(false)}
                 >
-                  Ticket
+                  Vé
                 </Link>
               </li>
             )}

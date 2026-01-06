@@ -41,6 +41,7 @@ export default function BusSeatClient({
                 routeData={routeData}
                 seatData={seatData}
                 price={price}
+                schedulingId={schedulingId}
                 etd={etd}
                 eta={eta}
                 distance={distance}

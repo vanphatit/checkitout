@@ -7,14 +7,18 @@ import {
   FiCheckCircle,
   FiLoader,
   FiArrowRight,
+  FiDownload,
 } from "react-icons/fi";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   const ticketId = searchParams.get("ticketId");
   const transactionId = searchParams.get("transactionId");
@@ -29,6 +33,15 @@ export default function PaymentSuccessPage() {
       try {
         const data = await ticketService.getTicketById(ticketId);
         setTicket(data);
+        
+        // Load QR code
+        try {
+          const qrBlob = await ticketService.generateQRCode(ticketId);
+          const qrUrl = URL.createObjectURL(qrBlob);
+          setQrCodeUrl(qrUrl);
+        } catch (qrError) {
+          console.error("Error loading QR code:", qrError);
+        }
       } catch (error) {
         console.error("Error fetching ticket:", error);
       } finally {
@@ -37,6 +50,13 @@ export default function PaymentSuccessPage() {
     };
 
     fetchTicket();
+    
+    // Cleanup QR code URL on unmount
+    return () => {
+      if (qrCodeUrl) {
+        URL.revokeObjectURL(qrCodeUrl);
+      }
+    };
   }, [ticketId]);
 
   if (loading) {
@@ -61,6 +81,28 @@ export default function PaymentSuccessPage() {
     typeof ticket?.schedulingId === "object" ? ticket.schedulingId : null;
   const promotion =
     typeof ticket?.promotionId === "object" ? ticket.promotionId : null;
+
+  const handleDownloadPDF = async () => {
+    if (!ticket?._id) return;
+
+    setDownloadingPDF(true);
+    try {
+      const blob = await ticketService.downloadTicketPDF(ticket._id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ticket-${ticket._id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("PDF download error:", err);
+      alert(err.response?.data?.message || "Không thể tải vé PDF");
+    } finally {
+      setDownloadingPDF(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] p-6 lg:p-10">
@@ -215,8 +257,48 @@ export default function PaymentSuccessPage() {
                 </div>
               )}
 
+              {/* QR Code Section */}
+              {qrCodeUrl && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-black text-slate-900 mb-3">
+                    Mã QR vé của bạn
+                  </h3>
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center">
+                    <div className="bg-white p-4 rounded-xl shadow-sm">
+                      <Image
+                        src={qrCodeUrl}
+                        alt="QR Code"
+                        width={200}
+                        height={200}
+                        className="w-48 h-48"
+                      />
+                    </div>
+                    <p className="text-sm text-slate-500 mt-3 text-center">
+                      Quét mã QR này khi lên xe
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={downloadingPDF}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {downloadingPDF ? (
+                    <>
+                      <FiLoader className="animate-spin" />
+                      Đang tải...
+                    </>
+                  ) : (
+                    <>
+                      <FiDownload />
+                      Tải vé PDF
+                    </>
+                  )}
+                </button>
                 <Link
                   href="/my-tickets"
                   className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors"
