@@ -39,10 +39,12 @@ export default function BookingSummary({
       setIsProcessing(true);
 
       // Get selected seat IDs
-      const seatIds = selectedSeats.map((seatNo) => {
-        const seat = data.find((s) => s.seatNo === seatNo);
-        return seat?._id;
-      }).filter(Boolean) as string[];
+      const seatIds = selectedSeats
+        .map((seatNo) => {
+          const seat = data.find((s) => s.seatNo === seatNo);
+          return seat?._id;
+        })
+        .filter(Boolean) as string[];
 
       if (seatIds.length === 0) {
         alert("Không tìm thấy thông tin ghế. Vui lòng thử lại.");
@@ -82,45 +84,43 @@ export default function BookingSummary({
         {/* Destination */}
         <div className="flex items-center justify-between">
           <h1 className="text-lg text-neutral-600 font-medium">
-            Your Destination
+            Lộ trình của bạn
           </h1>
-          <Link
-            href="/bus-tickets"
-            className="text-sm text-primary font-medium"
-          >
-            Change route
+          <Link href="/scheduling" className="text-sm text-primary font-medium">
+            Thay đổi lộ trình
           </Link>
         </div>
 
         <div className="space-y-1">
           <p className="text-sm text-neutral-400">
-            From <span className="font-medium text-neutral-600">{from}</span>
+            Từ <span className="font-medium text-neutral-600">{from}</span>
           </p>
           <p className="text-sm text-neutral-400">
-            To <span className="font-medium text-neutral-600">{to}</span>
+            Đến <span className="font-medium text-neutral-600">{to}</span>
           </p>
 
           {etd && eta && (
             <div className="flex items-center gap-2">
               <h1 className="text-sm text-neutral-600">
-                Start <span className="font-medium">({etd})</span>
+                Bắt đầu <span className="font-medium">({etd})</span>
               </h1>
               <div className="flex-1 border-dashed border border-neutral-300" />
               <h1 className="text-sm text-neutral-600">
-                End <span className="font-medium">({eta})</span>
+                Kết thúc <span className="font-medium">({eta})</span>
               </h1>
             </div>
           )}
 
           {distance && (
             <p className="text-sm text-neutral-500">
-              Distance: <span className="font-medium text-neutral-600">{distance}km</span>
+              Khoảng cách:{" "}
+              <span className="font-medium text-neutral-600">{distance}km</span>
             </p>
           )}
 
           {estimatedDuration && (
             <p className="text-sm text-neutral-500">
-              Duration:{" "}
+              Thời gian:{" "}
               <span className="font-medium text-neutral-600">
                 {formatDuration(estimatedDuration)}
               </span>
@@ -131,11 +131,13 @@ export default function BookingSummary({
         {/* Selected seats */}
         <div className="space-y-3">
           <h1 className="text-lg text-neutral-600 font-medium">
-            Selected Seats
+            Chỗ ngồi được chọn
           </h1>
 
           {selectedSeats.length === 0 ? (
-            <p className="text-sm text-neutral-500">No seats selected</p>
+            <p className="text-sm text-neutral-500">
+              Không có chỗ nào được chọn
+            </p>
           ) : (
             <div className="flex gap-3 flex-wrap">
               {selectedSeats.map((seatId) => (
@@ -153,15 +155,15 @@ export default function BookingSummary({
         {/* Fare */}
         <div className="space-y-4">
           <div className="flex items-center justify-between border-dashed border-l pl-2">
-            <h3 className="text-sm text-neutral-500">Basic Fare:</h3>
+            <h3 className="text-sm text-neutral-500">Giá vé:</h3>
             <p className="text-sm text-neutral-600">
               {price.toLocaleString()} VND
             </p>
           </div>
 
           <div className="flex items-center justify-between">
-            <h3 className="text-base text-neutral-500">Total Price</h3>
-            <span className="text-xs text-neutral-500">(Including taxes)</span>
+            <h3 className="text-base text-neutral-500">Tổng giá</h3>
+            <span className="text-xs text-neutral-500">(Gồm thuế)</span>
           </div>
 
           <p className="text-base text-neutral-700 font-semibold">
@@ -179,10 +181,10 @@ export default function BookingSummary({
             {isProcessing ? (
               <>
                 <FiLoader className="w-4 h-4 animate-spin" />
-                Processing...
+                Đang xử lý...
               </>
             ) : (
-              "Proceed to Checkout"
+              "Hoàn tất để thanh toán"
             )}
           </button>
         ) : (
@@ -191,10 +193,10 @@ export default function BookingSummary({
               disabled
               className="w-full bg-primary text-white py-2.5 rounded-lg opacity-50 cursor-not-allowed"
             >
-              Proceed to Checkout
+              Hoàn tất để thanh toán
             </button>
             <small className="text-xs text-neutral-600">
-              Select at least 1 seat to proceed
+              Phải chọn ít nhất một chỗ ngồi để tiếp tục.
             </small>
           </div>
         )}
