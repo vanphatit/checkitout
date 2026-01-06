@@ -1,7 +1,7 @@
 export interface Seat {
   _id: string;
   seatNo: string;
-  status: "EMPTY" | "SOLD" | "LOCKED";
+  status: "EMPTY" | "SOLD" | "LOCKED" | "PENDING";
 }
 
 export interface SeatLock {

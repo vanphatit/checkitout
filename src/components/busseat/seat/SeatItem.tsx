@@ -12,16 +12,17 @@ export function SeatItem({
 }) {
   const isSelected = selectedSeats.includes(seat.seatNo);
   const isSold = seat.status === "SOLD";
+  const isPending = seat.status === "PENDING";
   const isLockedByOthers = seat.isLockedByOthers || false;
   const isLockedByMe = seat.isLockedByMe || false;
 
   return (
     <button
-      disabled={isSold || isLockedByOthers}
+      disabled={isSold || isLockedByOthers || isPending}
       onClick={() => onSeatClick(seat.seatNo)}
       className="flex flex-col items-center relative"
       title={
-        isSold
+        isSold || isPending
           ? "Sold"
           : isLockedByOthers
           ? "Locked by another user"
@@ -37,11 +38,11 @@ export function SeatItem({
             : isLockedByOthers
             ? "!text-orange-400 !opacity-60"
             : isSelected
-              ? "!text-orange-500"
-              : isLockedByMe
-                ? "!text-red-500"
-                : "text-primary"
-          }`}
+            ? "!text-orange-500"
+            : isLockedByMe
+            ? "!text-red-500"
+            : "text-primary"
+        }`}
       />
       <span className="text-xs">{seat.seatNo}</span>
       {isLockedByOthers && (

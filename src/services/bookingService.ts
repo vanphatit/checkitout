@@ -22,6 +22,7 @@ export const bookingService = {
     const response = await api.get<ApiResponse<Booking>>(
       `/scheduling/${id}`
     );
+    console.log("Scheduling data:", response.data);
     return resolveData<Booking>(response.data);
   },
 };
