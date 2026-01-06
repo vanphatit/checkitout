@@ -59,3 +59,10 @@ export interface AdminUpdateUserPayload extends UpdateProfilePayload {
 }
 
 export type UsersListResponse = UsersCollection;
+
+export interface UserStats {
+  total: number;
+  activeCount: number;
+  pendingCount: number;
+  sellerCount: number;
+}

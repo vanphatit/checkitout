@@ -6,6 +6,7 @@ import {
   RegisterData,
   RegisterApiData,
   ForgotPasswordData,
+  ResetPasswordData,
   AuthResponse,
   ApiResponse,
 } from "@/types/auth";
@@ -109,6 +110,27 @@ export const forgotPassword = createAsyncThunk(
         (error instanceof Error
           ? error.message
           : "Failed to send password reset email");
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async (data: ResetPasswordData, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/auth/reset-password", {
+        token: data.token,
+        newPassword: data.password,
+      });
+      return (
+        extractResponseData(response.data).message ||
+        "Password reset successful"
+      );
+    } catch (error: unknown) {
+      const errorMessage =
+        (error as any)?.response?.data?.message ||
+        (error instanceof Error ? error.message : "Password reset failed");
       return rejectWithValue(errorMessage);
     }
   }

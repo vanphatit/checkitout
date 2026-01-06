@@ -447,4 +447,22 @@ export const ticketService = {
         return "bg-slate-50 text-slate-600 border-slate-100";
     }
   },
+
+  /**
+   * Get seller ticket statistics (Seller only)
+   */
+  async getSellerStats(): Promise<{
+    totalIncome: number;
+    ticketCount: number;
+    averagePrice: number;
+  }> {
+    const res = await api.get<
+      ApiResponse<{
+        totalIncome: number;
+        ticketCount: number;
+        averagePrice: number;
+      }>
+    >("/ticket/seller/stats");
+    return resolveData(res.data);
+  },
 };

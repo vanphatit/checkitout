@@ -38,7 +38,7 @@ import {
 import { useAppDispatch, useAuth } from "@/hooks";
 import { userService } from "@/services/userService";
 import type { User } from "@/types/auth";
-import type { UserActivity, UsersListMeta } from "@/types/users";
+import type { UserActivity, UsersListMeta, UserStats } from "@/types/users";
 import {
   adminCreateUserSchema,
   adminUpdateUserSchema,
@@ -67,6 +67,7 @@ function AdminManagementContent() {
   const { user: authUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [meta, setMeta] = useState<UsersListMeta>(defaultMeta);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedActivities, setSelectedActivities] = useState<UserActivity[]>(
     []
@@ -127,6 +128,16 @@ function AdminManagementContent() {
     setPage(1);
   }, [roleFilter, statusFilter, debouncedSearch]);
 
+  const fetchStats = useCallback(async () => {
+    try {
+      const stats = await userService.getUserStats();
+      setUserStats(stats);
+    } catch (error) {
+      console.error("Failed to fetch user stats:", error);
+      // Don't show error to user, stats are not critical
+    }
+  }, []);
+
   const fetchUsers = useCallback(async () => {
     setAdminError(null);
     setIsLoadingUsers(true);
@@ -173,6 +184,10 @@ function AdminManagementContent() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   useEffect(() => {
     if (!selectedUser?.id) {
@@ -227,7 +242,7 @@ function AdminManagementContent() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchUsers();
+    await Promise.all([fetchUsers(), fetchStats()]);
   };
 
   const handleCreateUser = async (values: AdminCreateUserFormData) => {
@@ -249,7 +264,7 @@ function AdminManagementContent() {
         role: "SELLER",
         status: "ACTIVE",
       });
-      await fetchUsers();
+      await Promise.all([fetchUsers(), fetchStats()]);
     } catch (error) {
       setAdminError(
         error instanceof Error ? error.message : "Unable to create user"
@@ -285,6 +300,7 @@ function AdminManagementContent() {
         dispatch(setUser(updated));
       }
       setAdminMessage("User updated successfully");
+      await fetchStats();
     } catch (error) {
       setAdminError(
         error instanceof Error ? error.message : "Unable to update user"
@@ -307,7 +323,8 @@ function AdminManagementContent() {
       setIsDeletingUser(true);
       await userService.deleteUser(selectedUser.id);
       setAdminMessage("User deleted successfully");
-      await fetchUsers();
+      setSelectedUser(null);
+      await Promise.all([fetchUsers(), fetchStats()]);
     } catch (error) {
       setAdminError(
         error instanceof Error ? error.message : "Unable to delete user"
@@ -316,38 +333,6 @@ function AdminManagementContent() {
       setIsDeletingUser(false);
     }
   };
-
-  const statusSummary = useMemo(
-    () =>
-      users.reduce(
-        (acc, item) => {
-          acc[item.status] = (acc[item.status] ?? 0) + 1;
-          return acc;
-        },
-        {
-          ACTIVE: 0,
-          INACTIVE: 0,
-          PENDING: 0,
-        } as Record<User["status"], number>
-      ),
-    [users]
-  );
-
-  const roleSummary = useMemo(
-    () =>
-      users.reduce(
-        (acc, item) => {
-          acc[item.role] = (acc[item.role] ?? 0) + 1;
-          return acc;
-        },
-        {
-          ADMIN: 0,
-          SELLER: 0,
-          CUSTOMER: 0,
-        } as Record<User["role"], number>
-      ),
-    [users]
-  );
 
   const totalPages =
     meta.totalPages ||
@@ -360,29 +345,29 @@ function AdminManagementContent() {
       [
         {
           title: "Total users",
-          value: meta.total,
+          value: userStats?.total ?? 0,
           description: "Across all roles",
           icon: UsersIcon,
           accent: "bg-primary/10 text-primary",
         },
         {
           title: "Active accounts",
-          value: statusSummary.ACTIVE,
+          value: userStats?.activeCount ?? 0,
           description: "Currently approved",
           icon: BadgeCheck,
           accent: "bg-green-100 text-green-700",
         },
         {
           title: "Pending review",
-          value: statusSummary.PENDING,
+          value: userStats?.pendingCount ?? 0,
           description: "Need verification",
           icon: AlertTriangle,
           accent: "bg-yellow-100 text-yellow-700",
         },
         {
-          title: "Admin seats",
-          value: roleSummary.ADMIN,
-          description: "With elevated access",
+          title: "Sellers",
+          value: userStats?.sellerCount ?? 0,
+          description: "Registered sellers",
           icon: Shield,
           accent: "bg-indigo-100 text-indigo-700",
         },
@@ -393,7 +378,7 @@ function AdminManagementContent() {
         icon: LucideIcon;
         accent: string;
       }>,
-    [meta.total, roleSummary.ADMIN, statusSummary.ACTIVE, statusSummary.PENDING]
+    [userStats]
   );
 
   return (

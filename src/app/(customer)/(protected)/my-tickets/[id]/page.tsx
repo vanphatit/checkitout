@@ -203,7 +203,7 @@ export default function TicketDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] py-10 px-6">
+    <div>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">

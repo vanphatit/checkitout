@@ -13,11 +13,10 @@ import { useAuth } from "@/hooks";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { href: "/", label: "Home" },
+  { href: "/", label: "Trang chủ" },
   { href: "/route", label: "Tuyến đường" },
   { href: "/scheduling", label: "Lịch trình" },
-  { href: "/about", label: "About" },
-  { href: "/services", label: "Services" },
+  { href: "/about", label: "Về chúng tôi" },
 ];
 
 const getTicketLink = (role?: string) => {
@@ -135,7 +134,7 @@ const Navbar: React.FC = () => {
                   className={`text-base font-medium ${linkClass}`}
                   onClick={() => setOpen(false)}
                 >
-                  Vé
+                  Vé của tôi
                 </Link>
               </li>
             )}

@@ -172,3 +172,15 @@ export type GetTicketsParams = {
   phone?: string;
   schedulingId?: string;
 };
+
+export interface SellerTicketStats {
+  totalIncome: number;
+  ticketCount: number;
+  averagePrice: number;
+  ticketsByStatus: {
+    pending: number;
+    success: number;
+    failed: number;
+    transfer: number;
+  };
+}
