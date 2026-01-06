@@ -22,10 +22,10 @@ export default async function BusTicketCheckIn({
   const busPlate = busData.plateNo || "N/A";
   const warningMessage = (
     <>
-      One individual only can book 1 seat. If you want to book more seats.
-      Please{" "}
+      Mỗi khách chỉ được đặt một chỗ ngồi. Nếu bạn gặp vấn đề khi đặt chỗ, vui
+      lòng liên hệ với chúng tôi.{" "}
       <Link href="/contact" className="text-yellow-700 font-medium">
-        Contact our support team.
+        Check!tout Support
       </Link>
     </>
   );
@@ -61,18 +61,23 @@ export default async function BusTicketCheckIn({
         {routeData.stationIds && routeData.stationIds.length > 0 && (
           <div className="w-full space-y-6">
             {/* Warning for inactive stations */}
-            {routeData.stationIds.some((station: any) => station.isActive === false) && (
+            {routeData.stationIds.some(
+              (station: any) => station.isActive === false
+            ) && (
               <div className="w-full bg-orange-50 border border-orange-200 rounded-lg p-4">
                 <p className="text-sm text-orange-700">
-                  ⚠️ <strong>Lưu ý:</strong> Một số trạm trên tuyến đường này hiện đang tạm ngừng hoạt động.
-                  Vui lòng liên hệ nhà xe để biết thêm chi tiết.
+                  ⚠️ <strong>Lưu ý:</strong> Một số trạm trên tuyến đường này
+                  hiện đang tạm ngừng hoạt động. Vui lòng liên hệ nhà xe để biết
+                  thêm chi tiết.
                 </p>
               </div>
             )}
 
             {/* Interactive Map */}
             <div className="w-full bg-neutral-50 rounded-xl p-6 border border-neutral-200">
-              <h2 className="text-xl font-semibold text-neutral-700 mb-4">Route Map</h2>
+              <h2 className="text-xl font-semibold text-neutral-700 mb-4">
+                Route Map
+              </h2>
               <RouteMapWrapper stations={routeData.stationIds} height="500px" />
             </div>
 
@@ -85,14 +90,22 @@ export default async function BusTicketCheckIn({
                 {routeData.stationIds.map((station, index) => (
                   <div
                     key={station._id}
-                    className={`flex items-start gap-3 break-inside-avoid mb-2 ${station.isActive === false ? 'opacity-50' : ''}`}
+                    className={`flex items-start gap-3 break-inside-avoid mb-2 ${
+                      station.isActive === false ? "opacity-50" : ""
+                    }`}
                   >
                     <div className="flex flex-col items-center flex-shrink-0">
-                      <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-semibold ${station.isActive === false ? "bg-neutral-400" :
-                        index === 0 ? "bg-green-500" :
-                          index === routeData.stationIds.length - 1 ? "bg-red-500" :
-                            "bg-blue-500"
-                        }`}>
+                      <div
+                        className={`w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-semibold ${
+                          station.isActive === false
+                            ? "bg-neutral-400"
+                            : index === 0
+                            ? "bg-green-500"
+                            : index === routeData.stationIds.length - 1
+                            ? "bg-red-500"
+                            : "bg-blue-500"
+                        }`}
+                      >
                         {index + 1}
                       </div>
                       {index < routeData.stationIds.length - 1 && (
@@ -112,7 +125,9 @@ export default async function BusTicketCheckIn({
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-neutral-500 mt-0.5 line-clamp-1">{station.address}</p>
+                      <p className="text-xs text-neutral-500 mt-0.5 line-clamp-1">
+                        {station.address}
+                      </p>
                     </div>
                   </div>
                 ))}

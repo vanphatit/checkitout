@@ -36,14 +36,18 @@ const BusSeat: React.FC<BusSeatProps> = ({
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [showError, setShowError] = useState(false);
 
-  console.log("🎯 BusSeat component rendered");
-
-  const { lockSeat, unlockSeat, isSeatLockedByOthers, isSeatLockedByMe, isConnected, lockedSeats, updateTrigger } = useSeatWebSocketContext();
-
-  console.log("📡 WebSocket status:", { isConnected, updateTrigger, lockedCount: Object.keys(lockedSeats).length });
+  const {
+    lockSeat,
+    unlockSeat,
+    isSeatLockedByOthers,
+    isSeatLockedByMe,
+    isConnected,
+    lockedSeats,
+    updateTrigger,
+  } = useSeatWebSocketContext();
 
   // Pre-compute lock status for all seats to trigger re-render
-  const data = seatData.map(seat => ({
+  const data = seatData.map((seat) => ({
     ...seat,
     isLockedByOthers: isSeatLockedByOthers(seat.seatNo),
     isLockedByMe: isSeatLockedByMe(seat.seatNo),
