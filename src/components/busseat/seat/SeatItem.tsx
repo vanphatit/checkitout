@@ -15,7 +15,6 @@ export function SeatItem({
   const isLockedByOthers = seat.isLockedByOthers || false;
   const isLockedByMe = seat.isLockedByMe || false;
 
-  // Debug log
   if (seat.seatNo === "A7" || seat.seatNo === "A3") {
     console.log(`🔄 [${seat.seatNo}] Rendering:`, {
       isLockedByOthers,
@@ -34,21 +33,22 @@ export function SeatItem({
         isSold
           ? "Sold"
           : isLockedByOthers
-            ? "Locked by another user"
-            : isLockedByMe
-              ? "Locked by you"
-              : "Available"
+          ? "Locked by another user"
+          : isLockedByMe
+          ? "Locked by you"
+          : "Available"
       }
     >
       <LuArmchair
-        className={`text-2xl transition-colors ${isSold
-          ? "text-neutral-400"
-          : isLockedByOthers
+        className={`text-2xl transition-colors ${
+          isSold
+            ? "text-neutral-400"
+            : isLockedByOthers
             ? "!text-orange-400 !opacity-60"
             : isSelected || isLockedByMe
-              ? "text-red-500"
-              : "text-primary"
-          }`}
+            ? "text-red-500"
+            : "text-primary"
+        }`}
       />
       <span className="text-xs">{seat.seatNo}</span>
       {isLockedByOthers && (

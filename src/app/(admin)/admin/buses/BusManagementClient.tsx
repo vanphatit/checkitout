@@ -1,5 +1,5 @@
 "use client";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import BusStats from "@/components/busseat/bus-stats/bus-stats";
 import CreateBusModal from "@/components/busseat/form/CreateBusModal";
 import EditBusModal from "@/components/busseat/form/EditBusModal";
@@ -57,7 +57,7 @@ export default function BusManagementClient({ page, search, status }: Props) {
   const totalPages = response?.totalPages || 1;
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] p-6 lg:p-10 text-slate-900 font-sans">
+    <div className="min-h-screen bg-[#F9FAFB] p-6 lg:p-10 text-slate-900">
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>

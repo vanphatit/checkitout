@@ -9,6 +9,7 @@ import { useSeatWebSocketContext } from "@/components/providers/SeatWebSocketPro
 import { Bus, BusType } from "@/types/bus";
 import { Route } from "@/types/booking";
 import { Seat } from "@/types/seat";
+import { Camera, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 interface BusSeatProps {
   busData: Bus;
@@ -84,11 +85,34 @@ const BusSeat: React.FC<BusSeatProps> = ({
     }
   }, [showError]);
 
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+
+  const nextImage = () => {
+    setCurrentImgIndex((prev) => (prev + 1) % busData.images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImgIndex(
+      (prev) => (prev - 1 + busData.images.length) % busData.images.length
+    );
+  };
+
   return (
     <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-10">
       {/* LEFT – SEAT AREA */}
       <div className="col-span-1 md:col-span-3 w-full flex flex-col items-stretch shadow-sm rounded-xl p-3 border border-neutral-200 space-y-6">
-        <SeatLegend />
+        <div className="flex items-center justify-between border-b pb-4">
+          <SeatLegend />
+          {busData.images && busData.images.length > 0 && (
+            <button
+              onClick={() => setIsGalleryOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <Camera size={15} />
+            </button>
+          )}
+        </div>
 
         <SeatGrid
           type={busData.type as BusType}
@@ -112,6 +136,46 @@ const BusSeat: React.FC<BusSeatProps> = ({
           estimatedDuration={estimatedDuration}
         />
       </div>
+
+      {isGalleryOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4">
+          {/* Nút đóng */}
+          <button
+            onClick={() => setIsGalleryOpen(false)}
+            className="absolute top-5 right-5 text-white hover:text-gray-300"
+          >
+            <X size={32} />
+          </button>
+
+          {/* Nút Trái */}
+          <button
+            onClick={prevImage}
+            className="absolute left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"
+          >
+            <ChevronLeft size={40} />
+          </button>
+
+          {/* Ảnh hiện tại */}
+          <div className="max-w-4xl max-h-[80vh] flex flex-col items-center">
+            <img
+              src={busData.images[currentImgIndex].url}
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              alt="Bus interior"
+            />
+            <p className="text-white mt-4 font-medium">
+              {currentImgIndex + 1} / {busData.images.length}
+            </p>
+          </div>
+
+          {/* Nút Phải */}
+          <button
+            onClick={nextImage}
+            className="absolute right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"
+          >
+            <ChevronRight size={40} />
+          </button>
+        </div>
+      )}
 
       {/* ERROR MESSAGE */}
       {showError && (
